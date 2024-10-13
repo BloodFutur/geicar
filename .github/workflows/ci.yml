@@ -1,13 +1,8 @@
 name: ROS2 CI
 
 on:
-  issue_comment:
-    types:
-    - created
-  merge_group:
-    types: [checks_requested]
-    branches: [develop]
-
+  pull_request:
+    types: [synchronize]
 defaults:
   run:
     working-directory: ./raspberryPI3/ros2_ws
@@ -16,9 +11,8 @@ env:
   ROS_DISTRO: humble
 
 jobs:
-  build:
+  ROS2-build:
     runs-on: ubuntu-latest
-    if: github.event.issue.pull_request && contains(github.event.comment.body, '/build-ros')
 
     steps:
     - name: Get PR branch
@@ -71,20 +65,3 @@ jobs:
         sha: ${{ steps.comment-branch.outputs.head_sha }}
         token: ${{ secrets.GITHUB_TOKEN }}
         status: ${{ job.status }}
-
-    - name: Add comment to PR
-      uses: actions/github-script@v6
-      if: always()
-      with:
-        script: |
-          const name = '${{ github.workflow   }}';
-          const url = '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}';
-          const success = '${{ job.status }}' === 'success';
-          const body = `${name}: ${success ? 'succeeded ✅' : 'failed ❌'}\n${url}`;
-
-          await github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: body
-          })
