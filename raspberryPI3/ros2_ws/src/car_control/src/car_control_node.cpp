@@ -28,7 +28,15 @@ public:
         mode = 0;
         requestedThrottle = 0;
         requestedSteerAngle = 0;
-    
+        leftSpeedCmd = 0.0:
+        rightSpeedCmd = 0.0;
+        leftRegulatedSpeed = 0.0;
+        rightRegulatedSpeed = 0.0;
+        oldIntergratorLeftVal = 0.0;
+        oldIntergratorRightVal = 0.0;
+        targetRightSpeed = 0.0;
+        targetLeftSpeed = 0.0;
+        
 
         publisher_can_= this->create_publisher<interfaces::msg::MotorsOrder>("motors_order", 10);
 
@@ -104,6 +112,8 @@ private:
     */
     void motorsFeedbackCallback(const interfaces::msg::MotorsFeedback & motorsFeedback){
         currentAngle = motorsFeedback.steering_angle;
+        currentLeftSpeed = motorsFeedback.left_rear_speed;
+        currentRightSpeed = motorsFeedback.right_rear_speed;
     }
 
 
@@ -116,6 +126,10 @@ private:
     * - currentAngle [from motors feedback]
     */
     void updateCmd(){
+        float errorLeftSpeed = 0.0;
+        float errorRightSpeed = 0.0;
+        float integratorLeftVal = 0.0;
+        float integratorRightVal = 0.0;
 
         auto motorsOrder = interfaces::msg::MotorsOrder();
 
@@ -137,7 +151,37 @@ private:
 
             //Autonomous Mode
             } else if (mode==1){
-                //...
+
+                errorLeftSpeed = targetLeftSpeed - currentLeftSpeed;
+                errorRightSpeed = targetRightSpeed - currentRightSpeed;
+                integratorLeftVal = oldIntergratorLeftVal + KI * (errorLeftSpeed + leftSpeedCmd - leftRegulatedSpeed);
+                integratorRightVal = oldIntergratorRightVal + KI * (errorRightSpeed + rightSpeedCmd - rightRegulatedSpeed);
+                leftRegulatedSpeed = integratorLeftVal + KP * errorLeftSpeed;
+                rightRegulatedSpeed = integratorRightVal + KP * errorRightSpeed;
+
+                if (leftRegulatedSpeed > MAX_SPEED){
+                    leftSpeedCmd = MAX_SPEED;
+                }
+                else if (leftRegulatedSpeed  < 0){
+                    leftSpeedCmd = 0;
+                }
+                else{
+                    leftSpeedCmd = leftRegulatedSpeed;
+                }
+
+                if (rightRegulatedSpeed > MAX_SPEED){
+                    rightSpeedCmd = MAX_SPEED;
+                }
+                else if (rightRegulatedSpeed  < 0){
+                    rightSpeedCmd = 0;
+                }
+                else{
+                    rightSpeedCmd = rightRegulatedSpeed;
+                }
+
+                autonomousPropulsionCmd(rightSpeedCmd, rightRearPwmCmd);
+                autonomousPropulsionCmd(leftSpeedCmd, leftRearPwmCmd);
+
             }
         }
 
@@ -215,11 +259,23 @@ private:
     
     //Motors feedback variables
     float currentAngle;
+    float currentLeftSpeed;
+    float currentRightSpeed;
 
     //Manual Mode variables (with joystick control)
     bool reverse;
     float requestedThrottle;
     float requestedSteerAngle;
+
+    //Autonomous Mode variables 
+    float targetRightSpeed;
+    float targetLeftSpeed;
+    float leftSpeedCmd;
+    float rightSpeedCmd;
+    float leftRegulatedSpeed;
+    float rightRegulatedSpeed;
+    float oldIntergratorLeftVal;
+    float oldIntergratorRightVal;
 
     //Control variables
     uint8_t leftRearPwmCmd;
