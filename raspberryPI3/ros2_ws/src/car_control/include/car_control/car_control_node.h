@@ -8,8 +8,8 @@
 #define PERIOD_UPDATE_CMD 1ms //Period to update proupulsion and steering command in [ms]
 
 #define STOP 50 //PWM value to stop motors
-#define KP 10.0
-#define KI 0.1
+#define KP 0.0
+#define KI 0.0
 
 
 #endif /*__ car_control_node_H */

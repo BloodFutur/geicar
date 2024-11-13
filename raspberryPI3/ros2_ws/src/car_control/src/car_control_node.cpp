@@ -144,14 +144,15 @@ private:
             //Manual Mode
             if (mode==0){
                 
-                manualPropulsionCmd(requestedThrottle, reverse, leftRearPwmCmd,rightRearPwmCmd);
+                #manualPropulsionCmd(requestedThrottle, reverse, leftRearPwmCmd,rightRearPwmCmd);
+                manualPropulsionCmd(1, False, leftRearPwmCmd,rightRearPwmCmd); //Test max speed
 
                 steeringCmd(requestedSteerAngle,currentAngle, steeringPwmCmd);
 
 
             //Autonomous Mode
             } else if (mode==1){
-
+                /*
                 errorLeftSpeed = targetLeftSpeed - currentLeftSpeed;
                 errorRightSpeed = targetRightSpeed - currentRightSpeed;
                 integratorLeftVal = oldIntergratorLeftVal + KI * (errorLeftSpeed + leftSpeedCmd - leftRegulatedSpeed);
@@ -180,7 +181,7 @@ private:
                 }
 
                 autonomousPropulsionCmd(rightSpeedCmd, rightRearPwmCmd);
-                autonomousPropulsionCmd(leftSpeedCmd, leftRearPwmCmd);
+                autonomousPropulsionCmd(leftSpeedCmd, leftRearPwmCmd);*/
 
             }
         }
