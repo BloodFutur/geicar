@@ -42,8 +42,7 @@ try:
 
         # Pause for specified interval
         threading.Event().wait(interval_seconds)
-        #time.sleep(interval_seconds)
-
+        
 except KeyboardInterrupt:
     print("Image capture stopped by user.")
 
