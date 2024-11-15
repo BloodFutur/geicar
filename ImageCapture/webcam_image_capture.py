@@ -5,21 +5,21 @@ from datetime import datetime
 import threading
 
 # Parameters
-interval_seconds = 1  # Time interval between each capture in seconds
+interval_seconds = 0.1  # Time interval between each capture in seconds
 save_directory = "captured_images"  # Folder where images will be saved
 
-#Create a folder to store images, if none exists
+# Create a folder to store images, if none exists
 if not os.path.exists(save_directory):
     os.makedirs(save_directory)
 
-#Camera initialization (0 for default camera, try 1 if using another webcam)
+# Camera initialization (0 for default camera, try 1 if using another webcam)
 cap = cv2.VideoCapture(0)
 
 if not cap.isOpened():
     print("Error: Unable to access webcam.")
     exit(1)
 
-#Reduce buffer size
+# Reduce buffer size
 cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
 
 try:
@@ -33,7 +33,7 @@ try:
             break
 
         # Generate a unique image name with timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
         image_path = os.path.join(save_directory, f"image_{timestamp}.jpg")
 
         # Image saving
