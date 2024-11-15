@@ -2,45 +2,51 @@ import cv2
 import os
 import time
 from datetime import datetime
+import threading
 
-# Paramètres
-interval_seconds = 5  # Intervalle de temps entre chaque capture en secondes
-save_directory = "captured_images"  # Dossier où les images seront enregistrées
+# Parameters
+interval_seconds = 1  # Time interval between each capture in seconds
+save_directory = "captured_images"  # Folder where images will be saved
 
-# Création du dossier pour stocker les images, s'il n'existe pas
+#Create a folder to store images, if none exists
 if not os.path.exists(save_directory):
     os.makedirs(save_directory)
 
-# Initialisation de la caméra (0 pour la caméra par défaut, essayez 1 si vous utilisez une autre webcam)
+#Camera initialization (0 for default camera, try 1 if using another webcam)
 cap = cv2.VideoCapture(0)
 
 if not cap.isOpened():
-    print("Erreur: Impossible d'accéder à la webcam.")
-    exit()
+    print("Error: Unable to access webcam.")
+    exit(1)
+
+#Reduce buffer size
+cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
 
 try:
     print("Press Ctrl+C to stop capturing images.")
     while True:
-        # Capture de l'image
+        # Clearing buffer by reading twice 
+        ret, frame = cap.read()
         ret, frame = cap.read()
         if not ret:
-            print("Erreur: Impossible de lire une frame.")
+            print("Error: Unable to read a frame.")
             break
 
-        # Génération d'un nom unique pour l'image avec horodatage
+        # Generate a unique image name with timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         image_path = os.path.join(save_directory, f"image_{timestamp}.jpg")
 
-        # Sauvegarde de l'image
+        # Image saving
         cv2.imwrite(image_path, frame)
-        print(f"Image capturée et enregistrée : {image_path}")
+        print(f"Captured and saved image : {image_path}")
 
-        # Pause pour l'intervalle spécifié
-        time.sleep(interval_seconds)
+        # Pause for specified interval
+        threading.Event().wait(interval_seconds)
+        #time.sleep(interval_seconds)
 
 except KeyboardInterrupt:
-    print("Capture d'images arrêtée par l'utilisateur.")
+    print("Image capture stopped by user.")
 
-# Libération de la caméra et fermeture des fenêtres
+# Releasing the camera and closing the windows
 cap.release()
 cv2.destroyAllWindows()
