@@ -28,7 +28,7 @@ public:
         mode = 0;
         requestedThrottle = 0;
         requestedSteerAngle = 0;
-        leftSpeedCmd = 0.0:
+        leftSpeedCmd = 0.0;
         rightSpeedCmd = 0.0;
         leftRegulatedSpeed = 0.0;
         rightRegulatedSpeed = 0.0;
@@ -126,10 +126,11 @@ private:
     * - currentAngle [from motors feedback]
     */
     void updateCmd(){
+        /*
         float errorLeftSpeed = 0.0;
         float errorRightSpeed = 0.0;
         float integratorLeftVal = 0.0;
-        float integratorRightVal = 0.0;
+        float integratorRightVal = 0.0;*/
 
         auto motorsOrder = interfaces::msg::MotorsOrder();
 
@@ -144,14 +145,17 @@ private:
             //Manual Mode
             if (mode==0){
                 
-                #manualPropulsionCmd(requestedThrottle, reverse, leftRearPwmCmd,rightRearPwmCmd);
-                manualPropulsionCmd(1, False, leftRearPwmCmd,rightRearPwmCmd); //Test max speed
+                manualPropulsionCmd(requestedThrottle, reverse, leftRearPwmCmd,rightRearPwmCmd);
 
                 steeringCmd(requestedSteerAngle,currentAngle, steeringPwmCmd);
+                motorsOrder.left_rear_pwm = 70;
+                motorsOrder.right_rear_pwm = 70;
 
 
             //Autonomous Mode
             } else if (mode==1){
+                motorsOrder.left_rear_pwm = 50;
+                motorsOrder.right_rear_pwm = 50;
                 /*
                 errorLeftSpeed = targetLeftSpeed - currentLeftSpeed;
                 errorRightSpeed = targetRightSpeed - currentRightSpeed;
@@ -188,10 +192,9 @@ private:
 
 
         //Send order to motors
-        motorsOrder.left_rear_pwm = leftRearPwmCmd;
-        motorsOrder.right_rear_pwm = rightRearPwmCmd;
+        //motorsOrder.left_rear_pwm = leftRearPwmCmd;
+        //motorsOrder.right_rear_pwm = rightRearPwmCmd; 
         motorsOrder.steering_pwm = steeringPwmCmd;
-
         publisher_can_->publish(motorsOrder);
     }
 
