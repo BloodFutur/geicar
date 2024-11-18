@@ -66,14 +66,14 @@ import pandas as pd
 left_feedback_df = pd.DataFrame({'time': normalized_time_feedback, 'left_feedback': left_feedback})
 right_feedback_df = pd.DataFrame({'time': normalized_time_feedback, 'right_feedback': right_feedback})
 
-# left_feedback_file = 'rosbag_data/csv/left_feedback.csv'
-# right_feedback_file = 'rosbag_data/csv/right_feedback.csv'
+# left_feedback_file = '../rosbag_data/csv/left_feedback.csv'
+# right_feedback_file = '../rosbag_data/csv/right_feedback.csv'
 
-# left_feedback_file = 'rosbag_data/csv/left_feedback_2.csv'
-# right_feedback_file = 'rosbag_data/csv/right_feedback_2.csv'
+# left_feedback_file = '../rosbag_data/csv/left_feedback_2.csv'
+# right_feedback_file = '../rosbag_data/csv/right_feedback_2.csv'
 
-left_feedback_file = 'rosbag_data/csv/left_feedback_3.csv'
-right_feedback_file = 'rosbag_data/csv/right_feedback_3.csv'
+left_feedback_file = '../rosbag_data/csv/left_feedback_3.csv'
+right_feedback_file = '../rosbag_data/csv/right_feedback_3.csv'
 
 left_feedback_df.to_csv(left_feedback_file, index=False)
 right_feedback_df.to_csv(right_feedback_file, index=False)
@@ -83,14 +83,14 @@ left_feedback_df, right_feedback_df
 left_command_df = pd.DataFrame({'time': normalized_time_command, 'left_command': left_command})
 right_command_df = pd.DataFrame({'time': normalized_time_command, 'right_command': right_command})
 
-# left_command_file = 'rosbag_data/csv/left_command.csv'
-# right_command_file = 'rosbag_data/csv/right_command.csv'
+# left_command_file = '../rosbag_data/csv/left_command.csv'
+# right_command_file = '../rosbag_data/csv/right_command.csv'
 
-# left_command_file = 'rosbag_data/csv/left_command_2.csv'
-# right_command_file = 'rosbag_data/csv/right_command_2.csv'
+# left_command_file = '../rosbag_data/csv/left_command_2.csv'
+# right_command_file = '../rosbag_data/csv/right_command_2.csv'
 
-left_command_file = 'rosbag_data/csv/left_command_3.csv'
-right_command_file = 'rosbag_data/csv/right_command_3.csv'
+left_command_file = '../rosbag_data/csv/left_command_3.csv'
+right_command_file = '../rosbag_data/csv/right_command_3.csv'
 
 left_command_df.to_csv(left_command_file, index=False)
 right_command_df.to_csv(right_command_file, index=False)
