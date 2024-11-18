@@ -1,0 +1,54 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Park Patroller</title>
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <h1>Park Patroller</h1>
+    </header>
+
+    <main id="main-container">
+        <!-- Data section on the left -->
+        <section id="data-section" aria-label="Instructions and Connection Status">
+            <p>To see this page update:</p>
+            <ul>
+                <li>Run a Rosbridge connection at <code>ws://localhost:9090</code></li>
+                <li>Start publishing ROS messages to <code>/my_topic</code></li>
+            </ul>
+
+            <hr />
+
+            <p>Connection: <span id="status" style="font-weight: bold;">N/A</span></p>
+            <p><code>/my_topic</code> messages received:</p>
+            <ul id="messages" style="font-weight: bold;"></ul>
+
+            <label for="csvFileInput">Upload CSV file:</label>
+            <input type="file" id="csvFileInput" accept=".csv" />
+        </section>
+
+        <!-- Map section on the right -->
+        <section id="map-section" aria-label="Map Display">
+            <div id="map"></div> 
+        </section>
+    </main>
+
+    <!-- These scripts have to be started in the following order -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+    
+    <script src="js/map.js"></script>
+    <script src="js/gps.js"></script>
+    <script src="js/ros.js"></script>
+
+</body>
+</html>
