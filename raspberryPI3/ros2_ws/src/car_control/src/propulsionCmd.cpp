@@ -27,7 +27,7 @@ int * manualPropulsionCmd(float requestedThrottle, bool reverse, uint8_t& leftRe
 int * autonomousPropulsionCmd(float requestedSpeed, uint8_t& PwmCmd){
 
     if ((requestedSpeed > 0) && (requestedSpeed < MAX_SPEED)){
-        PwmCmd = 50 + PWM_PLAGE * requestedSpeed / MAX_SPEED;
+        PwmCmd = requestedSpeed + 50;
     }
     else if ((requestedSpeed > MAX_SPEED) || (requestedSpeed = MAX_SPEED)){
         PwmCmd = 100;
