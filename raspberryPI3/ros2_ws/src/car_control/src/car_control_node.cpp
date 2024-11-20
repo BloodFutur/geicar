@@ -32,10 +32,10 @@ public:
         rightSpeedCmd = 0.0;
         leftRegulatedSpeed = 0.0;
         rightRegulatedSpeed = 0.0;
-        oldIntergratorLeftVal = 0.0;
-        oldIntergratorRightVal = 0.0;
-        targetRightSpeed = 0.0;
-        targetLeftSpeed = 0.0;
+        oldIntegratorLeftVal = 0.0;
+        oldIntegratorRightVal = 0.0;
+        targetRightSpeed = 30.0;
+        targetLeftSpeed = 30.0;
         currentLeftSpeed = 0.0;
         currentRightSpeed = 0.0;
         
@@ -158,8 +158,8 @@ private:
                 
                 errorLeftSpeed = targetLeftSpeed - currentLeftSpeed;
                 errorRightSpeed = targetRightSpeed - currentRightSpeed;
-                integratorLeftVal = oldIntergratorLeftVal + KPI_LEFT * errorLeftSpeed;
-                integratorRightVal = oldIntergratorRightVal + KPI_RIGHT * errorRightSpeed;
+                integratorLeftVal = oldIntegratorLeftVal + KPI_LEFT * errorLeftSpeed;
+                integratorRightVal = oldIntegratorRightVal + KPI_RIGHT * errorRightSpeed;
                 
                 leftRegulatedSpeed = integratorLeftVal + KPI_LEFT * errorLeftSpeed;
                 rightRegulatedSpeed = integratorRightVal + KPI_RIGHT * errorRightSpeed;
@@ -167,8 +167,8 @@ private:
                 rightSpeedCmd = rightRegulatedSpeed;
                 leftSpeedCmd = leftRegulatedSpeed;
 
-                oldIntergratorLeftVal = integratorLeftVal;
-                oldIntergratorRightVal = integratorRightVal;
+                oldIntegratorLeftVal = integratorLeftVal;
+                oldIntegratorRightVal = integratorRightVal;
 
                 autonomousPropulsionCmd(rightSpeedCmd, rightRearPwmCmd);
                 autonomousPropulsionCmd(leftSpeedCmd, leftRearPwmCmd);
@@ -249,10 +249,8 @@ private:
         rightSpeedCmd = 0.0;
         leftRegulatedSpeed = 0.0;
         rightRegulatedSpeed = 0.0;
-        oldIntergratorLeftVal = 0.0;
-        oldIntergratorRightVal = 0.0;
-        targetRightSpeed = 0.0;
-        targetLeftSpeed = 0.0;
+        oldIntegratorLeftVal = 0.0;
+        oldIntegratorRightVal = 0.0;
         currentLeftSpeed = 0.0;
         currentRightSpeed = 0.0;
     }
@@ -281,8 +279,8 @@ private:
     float rightSpeedCmd;
     float leftRegulatedSpeed;
     float rightRegulatedSpeed;
-    float oldIntergratorLeftVal;
-    float oldIntergratorRightVal;
+    float oldIntegratorLeftVal;
+    float oldIntegratorRightVal;
 
     //Control variables
     uint8_t leftRearPwmCmd;
