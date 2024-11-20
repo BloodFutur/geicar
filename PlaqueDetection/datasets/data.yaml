@@ -1,0 +1,5 @@
+train: images/train
+val: images/val
+
+nc: 1  # number of class (you can change it if nous need more than one class)
+names: ["license_plate"]  # name of the class
