@@ -36,6 +36,8 @@ public:
         oldIntergratorRightVal = 0.0;
         targetRightSpeed = 0.0;
         targetLeftSpeed = 0.0;
+        currentLeftSpeed = 0.0;
+        currentRightSpeed = 0.0;
         
 
         publisher_can_= this->create_publisher<interfaces::msg::MotorsOrder>("motors_order", 10);
@@ -91,6 +93,7 @@ private:
             if (mode==0){
                 RCLCPP_INFO(this->get_logger(), "Switching to MANUAL Mode");
             }else if (mode==1){
+                resetSpeedRegulationVariables();
                 RCLCPP_INFO(this->get_logger(), "Switching to AUTONOMOUS Mode");
             }else if (mode==2){
                 RCLCPP_INFO(this->get_logger(), "Switching to STEERING CALIBRATION Mode");
@@ -155,37 +158,28 @@ private:
                 
                 errorLeftSpeed = targetLeftSpeed - currentLeftSpeed;
                 errorRightSpeed = targetRightSpeed - currentRightSpeed;
-                integratorLeftVal = oldIntergratorLeftVal + KP_LEFT * errorLeftSpeed;
-                integratorRightVal = oldIntergratorRightVal + KP_RIGHT * errorRightSpeed;
-                leftRegulatedSpeed = integratorLeftVal + KP_LEFT * errorLeftSpeed;
-                rightRegulatedSpeed = integratorRightVal + KP_RIGHT * errorRightSpeed;
+                integratorLeftVal = oldIntergratorLeftVal + KPI_LEFT * errorLeftSpeed;
+                integratorRightVal = oldIntergratorRightVal + KPI_RIGHT * errorRightSpeed;
+                
+                leftRegulatedSpeed = integratorLeftVal + KPI_LEFT * errorLeftSpeed;
+                rightRegulatedSpeed = integratorRightVal + KPI_RIGHT * errorRightSpeed;
 
-                if (leftRegulatedSpeed > MAX_SPEED){
-                    leftSpeedCmd = MAX_SPEED;
-                }
-                else if (leftRegulatedSpeed  < 0){
-                    leftSpeedCmd = 0;
-                }
-                else{
-                    leftSpeedCmd = leftRegulatedSpeed;
-                }
+                rightSpeedCmd = rightRegulatedSpeed;
+                leftSpeedCmd = leftRegulatedSpeed;
 
-                if (rightRegulatedSpeed > MAX_SPEED){
-                    rightSpeedCmd = MAX_SPEED;
-                }
-                else if (rightRegulatedSpeed  < 0){
-                    rightSpeedCmd = 0;
-                }
-                else{
-                    rightSpeedCmd = rightRegulatedSpeed;
-                }
+                oldIntergratorLeftVal = integratorLeftVal;
+                oldIntergratorRightVal = integratorRightVal;
 
                 autonomousPropulsionCmd(rightSpeedCmd, rightRearPwmCmd);
                 autonomousPropulsionCmd(leftSpeedCmd, leftRearPwmCmd);
+                
+                RCLCPP_INFO(this->get_logger(), "errorLeftSpeed : %f", errorLeftSpeed);
+                RCLCPP_INFO(this->get_logger(), "errorRightSpeed : %f", errorRightSpeed);
+                RCLCPP_INFO(this->get_logger(), "leftRegulatedSpeed : %f", leftRegulatedSpeed);
+                RCLCPP_INFO(this->get_logger(), "rightRegulatedSpeed : %f", rightRegulatedSpeed);
 
             }
         }
-
 
         //Send order to motors
         motorsOrder.left_rear_pwm = leftRearPwmCmd;
@@ -248,6 +242,19 @@ private:
             start = false;  //Stop car
         }
     
+    }
+
+    void resetSpeedRegulationVariables(){
+        leftSpeedCmd = 0.0;
+        rightSpeedCmd = 0.0;
+        leftRegulatedSpeed = 0.0;
+        rightRegulatedSpeed = 0.0;
+        oldIntergratorLeftVal = 0.0;
+        oldIntergratorRightVal = 0.0;
+        targetRightSpeed = 0.0;
+        targetLeftSpeed = 0.0;
+        currentLeftSpeed = 0.0;
+        currentRightSpeed = 0.0;
     }
     
     // ---- Private variables ----
