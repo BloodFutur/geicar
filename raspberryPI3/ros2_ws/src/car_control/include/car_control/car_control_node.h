@@ -11,5 +11,7 @@
 #define KPI_LEFT 0.1109
 #define KPI_RIGHT 0.1097
 
+#define SPEED_ERR_THRESHOLD 1.0
+
 
 #endif /*__ car_control_node_H */

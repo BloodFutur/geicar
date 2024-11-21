@@ -158,11 +158,16 @@ private:
                 
                 errorLeftSpeed = targetLeftSpeed - currentLeftSpeed;
                 errorRightSpeed = targetRightSpeed - currentRightSpeed;
-                integratorLeftVal = oldIntegratorLeftVal + KPI_LEFT * errorLeftSpeed;
-                integratorRightVal = oldIntegratorRightVal + KPI_RIGHT * errorRightSpeed;
-                
-                leftRegulatedSpeed = integratorLeftVal + KPI_LEFT * errorLeftSpeed;
-                rightRegulatedSpeed = integratorRightVal + KPI_RIGHT * errorRightSpeed;
+
+                if((errorLeftSpeed > SPEED_ERR_THRESHOLD) || (errorLeftSpeed < - SPEED_ERR_THRESHOLD)){
+                    integratorLeftVal = oldIntegratorLeftVal + KPI_LEFT * errorLeftSpeed;                    
+                    leftRegulatedSpeed = integratorLeftVal + KPI_LEFT * errorLeftSpeed;
+                }
+
+                if((errorRightSpeed > SPEED_ERR_THRESHOLD) || (errorRightSpeed < - SPEED_ERR_THRESHOLD)){
+                    integratorRightVal = oldIntegratorRightVal + KPI_RIGHT * errorRightSpeed;
+                    rightRegulatedSpeed = integratorRightVal + KPI_RIGHT * errorRightSpeed;
+                }
 
                 rightSpeedCmd = rightRegulatedSpeed;
                 leftSpeedCmd = leftRegulatedSpeed;
