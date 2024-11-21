@@ -54,13 +54,13 @@ def preprocess_image(image):
     
 # This part will be used for integration of the pipeline of licence plate detection. 
 
-#Fonction pour lancer une instance du model
+#Function for model instance
 #def detect_objects(image, model, confidence_threshold=, iou_threshold=):
 
-# Fonction pour afficher les résultats
+# Function for drawing results
 #def draw_detections(image, detections): #TODO
 
-# Fonction pour capture d'images depuis la caméra
+# Function for image capture, linked to webcam_image_capture.py
 #def run_camera_detection(camera_index=0): #TODO
 
 
