@@ -162,18 +162,17 @@ private:
                 if((errorLeftSpeed > SPEED_ERR_THRESHOLD) || (errorLeftSpeed < - SPEED_ERR_THRESHOLD)){
                     integratorLeftVal = oldIntegratorLeftVal + KPI_LEFT * errorLeftSpeed;                    
                     leftRegulatedSpeed = integratorLeftVal + KPI_LEFT * errorLeftSpeed;
+                    oldIntegratorLeftVal = integratorLeftVal;
                 }
 
                 if((errorRightSpeed > SPEED_ERR_THRESHOLD) || (errorRightSpeed < - SPEED_ERR_THRESHOLD)){
                     integratorRightVal = oldIntegratorRightVal + KPI_RIGHT * errorRightSpeed;
                     rightRegulatedSpeed = integratorRightVal + KPI_RIGHT * errorRightSpeed;
+                    oldIntegratorRightVal = integratorRightVal;
                 }
 
                 rightSpeedCmd = rightRegulatedSpeed;
                 leftSpeedCmd = leftRegulatedSpeed;
-
-                oldIntegratorLeftVal = integratorLeftVal;
-                oldIntegratorRightVal = integratorRightVal;
 
                 autonomousPropulsionCmd(rightSpeedCmd, rightRearPwmCmd);
                 autonomousPropulsionCmd(leftSpeedCmd, leftRearPwmCmd);
@@ -286,6 +285,8 @@ private:
     float rightRegulatedSpeed;
     float oldIntegratorLeftVal;
     float oldIntegratorRightVal;
+    float oldSpeedLeft;
+    float oldSpeedRight;
 
     //Control variables
     uint8_t leftRearPwmCmd;
