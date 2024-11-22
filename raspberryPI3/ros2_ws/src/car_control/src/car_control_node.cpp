@@ -30,8 +30,6 @@ public:
         requestedSteerAngle = 0;
         leftSpeedCmd = 0.0;
         rightSpeedCmd = 0.0;
-        leftRegulatedSpeed = 0.0;
-        rightRegulatedSpeed = 0.0;
         oldIntegratorLeftVal = 0.0;
         oldIntegratorRightVal = 0.0;
         targetRightSpeed = 30.0;
@@ -161,26 +159,23 @@ private:
 
                 if((errorLeftSpeed > SPEED_ERR_THRESHOLD) || (errorLeftSpeed < - SPEED_ERR_THRESHOLD)){
                     integratorLeftVal = oldIntegratorLeftVal + KPI_LEFT * errorLeftSpeed;                    
-                    leftRegulatedSpeed = integratorLeftVal + KPI_LEFT * errorLeftSpeed;
+                    leftSpeedCmd = integratorLeftVal + KPI_LEFT * errorLeftSpeed;
                     oldIntegratorLeftVal = integratorLeftVal;
                 }
 
                 if((errorRightSpeed > SPEED_ERR_THRESHOLD) || (errorRightSpeed < - SPEED_ERR_THRESHOLD)){
                     integratorRightVal = oldIntegratorRightVal + KPI_RIGHT * errorRightSpeed;
-                    rightRegulatedSpeed = integratorRightVal + KPI_RIGHT * errorRightSpeed;
+                    rightSpeedCmd = integratorRightVal + KPI_RIGHT * errorRightSpeed;
                     oldIntegratorRightVal = integratorRightVal;
                 }
-
-                rightSpeedCmd = rightRegulatedSpeed;
-                leftSpeedCmd = leftRegulatedSpeed;
 
                 autonomousPropulsionCmd(rightSpeedCmd, rightRearPwmCmd);
                 autonomousPropulsionCmd(leftSpeedCmd, leftRearPwmCmd);
                 
                 RCLCPP_INFO(this->get_logger(), "errorLeftSpeed : %f", errorLeftSpeed);
                 RCLCPP_INFO(this->get_logger(), "errorRightSpeed : %f", errorRightSpeed);
-                RCLCPP_INFO(this->get_logger(), "leftRegulatedSpeed : %f", leftRegulatedSpeed);
-                RCLCPP_INFO(this->get_logger(), "rightRegulatedSpeed : %f", rightRegulatedSpeed);
+                RCLCPP_INFO(this->get_logger(), "leftSpeedCmd : %f", leftSpeedCmd);
+                RCLCPP_INFO(this->get_logger(), "rightSpeedCmd : %f", rightSpeedCmd);
 
             }
         }
@@ -248,11 +243,15 @@ private:
     
     }
 
+    /* Reset speed regulation variables :
+    *
+    * This function reset all variables used for speed regulation 
+    * when switching from MANUAL to AUTONOMOUS mode
+    * 
+    */
     void resetSpeedRegulationVariables(){
         leftSpeedCmd = 0.0;
         rightSpeedCmd = 0.0;
-        leftRegulatedSpeed = 0.0;
-        rightRegulatedSpeed = 0.0;
         oldIntegratorLeftVal = 0.0;
         oldIntegratorRightVal = 0.0;
         currentLeftSpeed = 0.0;
@@ -281,8 +280,6 @@ private:
     float targetLeftSpeed;
     float leftSpeedCmd;
     float rightSpeedCmd;
-    float leftRegulatedSpeed;
-    float rightRegulatedSpeed;
     float oldIntegratorLeftVal;
     float oldIntegratorRightVal;
     float oldSpeedLeft;
