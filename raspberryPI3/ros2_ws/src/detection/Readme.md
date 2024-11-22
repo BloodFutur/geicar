@@ -33,3 +33,9 @@ How to use
 * To start the node : ```ros2 run detection obstacles_detection```
 
 * to listen the topic : ```ros2 topic echo /obstacles_detection ```
+
+How to test 
+----------
+* To run every test : ``colcon test --event-handlers console_direct+ --packages-select detection``
+
+* To run just the integration test : ``colcon test --event-handlers console_direct+ --packages-select detection --pytest-args test/test_obstacles_detection.py``
