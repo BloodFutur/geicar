@@ -23,7 +23,7 @@ else:
     # If you want to display the annotated results with OpenCV:
     for result in results:
         annotated_frame = result.plot()  # Generates an image with annotations
-        cv2.imshow("Résultats", annotated_frame)
+        cv2.imshow("Results", annotated_frame)
         cv2.waitKey(0)  # Press any key to close the window
         cv2.destroyAllWindows()
         

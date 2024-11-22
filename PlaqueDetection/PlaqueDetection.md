@@ -40,7 +40,7 @@ The GitHub repository contains the Project PlaqueDetection with the following fi
 
     Set up the environment:
 
-        - Install the required Python dependencies
+        - Install the required Python dependencies (ultralytics, matplotlib, pyyaml)
 
 	- Optional : create a virtual environment : python -m venv venv 
 
