@@ -2,7 +2,7 @@ import rosbag2_py
 from rosidl_runtime_py.utilities import get_message
 from rclpy.serialization import deserialize_message
 
-# Attention : build package "interfaces" before running thí script
+# Attention : build package "interfaces" before running this script
 reader = rosbag2_py.SequentialReader()
 storage_options = rosbag2_py.StorageOptions(
     uri='../rosbag_data/db3/firstbag.db3',  
@@ -66,12 +66,6 @@ import pandas as pd
 left_feedback_df = pd.DataFrame({'time': normalized_time_feedback, 'left_feedback': left_feedback})
 right_feedback_df = pd.DataFrame({'time': normalized_time_feedback, 'right_feedback': right_feedback})
 
-# left_feedback_file = '../rosbag_data/csv/left_feedback.csv'
-# right_feedback_file = '../rosbag_data/csv/right_feedback.csv'
-
-# left_feedback_file = '../rosbag_data/csv/left_feedback_2.csv'
-# right_feedback_file = '../rosbag_data/csv/right_feedback_2.csv'
-
 left_feedback_file = '../rosbag_data/csv/left_feedback_3.csv'
 right_feedback_file = '../rosbag_data/csv/right_feedback_3.csv'
 
@@ -82,12 +76,6 @@ left_feedback_df, right_feedback_df
 
 left_command_df = pd.DataFrame({'time': normalized_time_command, 'left_command': left_command})
 right_command_df = pd.DataFrame({'time': normalized_time_command, 'right_command': right_command})
-
-# left_command_file = '../rosbag_data/csv/left_command.csv'
-# right_command_file = '../rosbag_data/csv/right_command.csv'
-
-# left_command_file = '../rosbag_data/csv/left_command_2.csv'
-# right_command_file = '../rosbag_data/csv/right_command_2.csv'
 
 left_command_file = '../rosbag_data/csv/left_command_3.csv'
 right_command_file = '../rosbag_data/csv/right_command_3.csv'
