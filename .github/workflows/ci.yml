@@ -58,6 +58,11 @@ jobs:
         colcon build --packages-select interfaces --cmake-args -Wno-dev
         colcon build --packages-skip interfaces --cmake-args -Wno-dev
 
+    - name: Test with colcon
+      run: |
+        source /opt/ros/humble/setup.bash
+        colcon test
+
     - name: Set latest commit status as ${{ job.status }}
       uses: myrotvorets/set-commit-status-action@master
       if: always()
