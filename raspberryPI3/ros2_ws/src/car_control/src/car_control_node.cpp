@@ -127,11 +127,6 @@ private:
     * - currentAngle [from motors feedback]
     */
     void updateCmd(){
-        
-        float errorLeftSpeed = 0.0;
-        float errorRightSpeed = 0.0;
-        float integratorLeftVal = 0.0;
-        float integratorRightVal = 0.0;
 
         auto motorsOrder = interfaces::msg::MotorsOrder();
 
@@ -154,29 +149,14 @@ private:
             //Autonomous Mode
             } else if (mode==1){
                 
-                errorLeftSpeed = targetLeftSpeed - currentLeftSpeed;
-                errorRightSpeed = targetRightSpeed - currentRightSpeed;
-
-                if((errorLeftSpeed > SPEED_ERR_THRESHOLD) || (errorLeftSpeed < - SPEED_ERR_THRESHOLD)){
-                    integratorLeftVal = oldIntegratorLeftVal + KPI_LEFT * errorLeftSpeed;                    
-                    leftSpeedCmd = integratorLeftVal + KPI_LEFT * errorLeftSpeed;
-                    oldIntegratorLeftVal = integratorLeftVal;
-                }
-
-                if((errorRightSpeed > SPEED_ERR_THRESHOLD) || (errorRightSpeed < - SPEED_ERR_THRESHOLD)){
-                    integratorRightVal = oldIntegratorRightVal + KPI_RIGHT * errorRightSpeed;
-                    rightSpeedCmd = integratorRightVal + KPI_RIGHT * errorRightSpeed;
-                    oldIntegratorRightVal = integratorRightVal;
-                }
+                updateSpeedCmd();
+                
+                RCLCPP_DEBUG(this->get_logger(), "leftSpeedCmd : %f", leftSpeedCmd);
+                RCLCPP_DEBUG(this->get_logger(), "rightSpeedCmd : %f", rightSpeedCmd);
 
                 autonomousPropulsionCmd(rightSpeedCmd, rightRearPwmCmd);
                 autonomousPropulsionCmd(leftSpeedCmd, leftRearPwmCmd);
                 
-                RCLCPP_INFO(this->get_logger(), "errorLeftSpeed : %f", errorLeftSpeed);
-                RCLCPP_INFO(this->get_logger(), "errorRightSpeed : %f", errorRightSpeed);
-                RCLCPP_INFO(this->get_logger(), "leftSpeedCmd : %f", leftSpeedCmd);
-                RCLCPP_INFO(this->get_logger(), "rightSpeedCmd : %f", rightSpeedCmd);
-
             }
         }
 
@@ -257,6 +237,37 @@ private:
         currentLeftSpeed = 0.0;
         currentRightSpeed = 0.0;
     }
+
+    /* Update speed commands for autonomous mode :
+    *  This function is called by updateCmd function in AUTONOMOUS mode
+    *  and update the speed command by calculating the integral and proportional part of the error
+    */
+
+   void updateSpeedCmd(){
+
+        float errorLeftSpeed = 0.0;
+        float errorRightSpeed = 0.0;
+        float integratorLeftVal = 0.0;
+        float integratorRightVal = 0.0;
+
+        errorLeftSpeed = targetLeftSpeed - currentLeftSpeed;
+        errorRightSpeed = targetRightSpeed - currentRightSpeed;
+
+        if((errorLeftSpeed > SPEED_ERR_THRESHOLD) || (errorLeftSpeed < - SPEED_ERR_THRESHOLD)){
+            integratorLeftVal = oldIntegratorLeftVal + KPI_LEFT * errorLeftSpeed;                    
+            leftSpeedCmd = integratorLeftVal + KPI_LEFT * errorLeftSpeed;
+            oldIntegratorLeftVal = integratorLeftVal;
+        }
+
+        if((errorRightSpeed > SPEED_ERR_THRESHOLD) || (errorRightSpeed < - SPEED_ERR_THRESHOLD)){
+            integratorRightVal = oldIntegratorRightVal + KPI_RIGHT * errorRightSpeed;
+            rightSpeedCmd = integratorRightVal + KPI_RIGHT * errorRightSpeed;
+            oldIntegratorRightVal = integratorRightVal;
+        }
+
+        RCLCPP_DEBUG(this->get_logger(), "errorLeftSpeed : %f", errorLeftSpeed);
+        RCLCPP_DEBUG(this->get_logger(), "errorRightSpeed : %f", errorRightSpeed);
+   }
     
     // ---- Private variables ----
 
