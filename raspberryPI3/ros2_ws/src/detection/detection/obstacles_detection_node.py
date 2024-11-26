@@ -7,6 +7,7 @@ from std_msgs.msg import Bool
 from interfaces.msg import Ultrasonic
 from detection.obstacles_detection_lib import detection
 
+
 class ObstaclesDetection(Node):
     """
     Node to detect obstacles using ultrasonic sensors.
@@ -25,9 +26,9 @@ class ObstaclesDetection(Node):
         # We do that so it's easier for the future subscribers of the /obstacles_detection subscribers to process the msg
         # And bc we don't need to change anything in the behavior of the car if there is no obstacles
         self.get_logger().debug(f'Current sensors values : front right : {msg_us.front_right} front left :  {msg_us.front_left} ')
-        response=Bool()
+        response = Bool()
         response.data = detection(msg_us, self.detection_distance)
-        if response.data == True :
+        if response.data:
             self.publisher.publish(response)
 
 

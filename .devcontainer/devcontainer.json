@@ -13,16 +13,21 @@
     "customizations": {
       "vscode": {
         "extensions":[
-          "ms-vscode.cpptools",
-          "ms-vscode.cpptools-themes",
-          "twxs.cmake",
-          "donjayamanne.python-extension-pack",
-          "eamodio.gitlens",
-          "ms-iot.vscode-ros",
-          "ms-python.python",
-          "smilerobotics.urdf"
+            "ms-vscode.cpptools",
+            "ms-vscode.cpptools-themes",
+            "twxs.cmake",
+            "donjayamanne.python-extension-pack",
+            "eamodio.gitlens",
+            "ms-iot.vscode-ros",
+            "ms-python.python",
+            "smilerobotics.urdf",
+            "ms-python.black-formatter",
+            "ms-python.flake8"
         ],
         "settings": {
+          "flake8.args": [
+            "--ignore=E501"
+          ],
           "terminal.integrated.profiles.linux": {
               "bash (Host)": {
                   "path": "bash"
