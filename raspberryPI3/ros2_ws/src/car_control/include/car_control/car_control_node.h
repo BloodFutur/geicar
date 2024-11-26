@@ -5,10 +5,13 @@
 #include <string.h>  
 
 
-#define PERIOD_UPDATE_CMD 1ms //Period to update proupulsion and steering command in [ms]
+#define PERIOD_UPDATE_CMD 200ms //Period to update proupulsion and steering command in [ms]
 
 #define STOP 50 //PWM value to stop motors
+#define KPI_LEFT 0.1109
+#define KPI_RIGHT 0.1097
 
+#define SPEED_ERR_THRESHOLD 1.0
 
 
 #endif /*__ car_control_node_H */

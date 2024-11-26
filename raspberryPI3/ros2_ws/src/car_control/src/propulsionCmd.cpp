@@ -1,4 +1,5 @@
 #include "../include/car_control/propulsionCmd.h"
+#include "../include/car_control/car_control_node.h"
 
 
 
@@ -20,4 +21,20 @@ int * manualPropulsionCmd(float requestedThrottle, bool reverse, uint8_t& leftRe
 
     return 0;
 
+}
+
+/* Calculate PwmCmd (PWM) in AUTONOMOUS mode */
+int * autonomousPropulsionCmd(float requestedSpeed, uint8_t& PwmCmd){
+
+    if ((requestedSpeed > 0) && (requestedSpeed < MAX_SPEED)){
+        PwmCmd = requestedSpeed + 50;
+    }
+    else if ((requestedSpeed > MAX_SPEED) || (requestedSpeed = MAX_SPEED)){
+        PwmCmd = 100;
+    }
+    else{
+        PwmCmd = STOP;
+    }
+
+    return 0;
 }

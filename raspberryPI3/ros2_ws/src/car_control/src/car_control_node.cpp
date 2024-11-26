@@ -28,7 +28,15 @@ public:
         mode = 0;
         requestedThrottle = 0;
         requestedSteerAngle = 0;
-    
+        leftSpeedCmd = 0.0;
+        rightSpeedCmd = 0.0;
+        oldIntegratorLeftVal = 0.0;
+        oldIntegratorRightVal = 0.0;
+        targetRightSpeed = 30.0;
+        targetLeftSpeed = 30.0;
+        currentLeftSpeed = 0.0;
+        currentRightSpeed = 0.0;
+        
 
         publisher_can_= this->create_publisher<interfaces::msg::MotorsOrder>("motors_order", 10);
 
@@ -83,6 +91,7 @@ private:
             if (mode==0){
                 RCLCPP_INFO(this->get_logger(), "Switching to MANUAL Mode");
             }else if (mode==1){
+                resetSpeedRegulationVariables();
                 RCLCPP_INFO(this->get_logger(), "Switching to AUTONOMOUS Mode");
             }else if (mode==2){
                 RCLCPP_INFO(this->get_logger(), "Switching to STEERING CALIBRATION Mode");
@@ -104,6 +113,8 @@ private:
     */
     void motorsFeedbackCallback(const interfaces::msg::MotorsFeedback & motorsFeedback){
         currentAngle = motorsFeedback.steering_angle;
+        currentLeftSpeed = motorsFeedback.left_rear_speed;
+        currentRightSpeed = motorsFeedback.right_rear_speed;
     }
 
 
@@ -137,16 +148,22 @@ private:
 
             //Autonomous Mode
             } else if (mode==1){
-                //...
+                
+                updateSpeedCmd();
+                
+                RCLCPP_DEBUG(this->get_logger(), "leftSpeedCmd : %f", leftSpeedCmd);
+                RCLCPP_DEBUG(this->get_logger(), "rightSpeedCmd : %f", rightSpeedCmd);
+
+                autonomousPropulsionCmd(rightSpeedCmd, rightRearPwmCmd);
+                autonomousPropulsionCmd(leftSpeedCmd, leftRearPwmCmd);
+                
             }
         }
 
-
         //Send order to motors
         motorsOrder.left_rear_pwm = leftRearPwmCmd;
-        motorsOrder.right_rear_pwm = rightRearPwmCmd;
+        motorsOrder.right_rear_pwm = rightRearPwmCmd; 
         motorsOrder.steering_pwm = steeringPwmCmd;
-
         publisher_can_->publish(motorsOrder);
     }
 
@@ -205,6 +222,52 @@ private:
         }
     
     }
+
+    /* Reset speed regulation variables :
+    *
+    * This function reset all variables used for speed regulation 
+    * when switching from MANUAL to AUTONOMOUS mode
+    * 
+    */
+    void resetSpeedRegulationVariables(){
+        leftSpeedCmd = 0.0;
+        rightSpeedCmd = 0.0;
+        oldIntegratorLeftVal = 0.0;
+        oldIntegratorRightVal = 0.0;
+        currentLeftSpeed = 0.0;
+        currentRightSpeed = 0.0;
+    }
+
+    /* Update speed commands for autonomous mode :
+    *  This function is called by updateCmd function in AUTONOMOUS mode
+    *  and update the speed command by calculating the integral and proportional part of the error
+    */
+
+   void updateSpeedCmd(){
+
+        float errorLeftSpeed = 0.0;
+        float errorRightSpeed = 0.0;
+        float integratorLeftVal = 0.0;
+        float integratorRightVal = 0.0;
+
+        errorLeftSpeed = targetLeftSpeed - currentLeftSpeed;
+        errorRightSpeed = targetRightSpeed - currentRightSpeed;
+
+        if((errorLeftSpeed > SPEED_ERR_THRESHOLD) || (errorLeftSpeed < - SPEED_ERR_THRESHOLD)){
+            integratorLeftVal = oldIntegratorLeftVal + KPI_LEFT * errorLeftSpeed;                    
+            leftSpeedCmd = integratorLeftVal + KPI_LEFT * errorLeftSpeed;
+            oldIntegratorLeftVal = integratorLeftVal;
+        }
+
+        if((errorRightSpeed > SPEED_ERR_THRESHOLD) || (errorRightSpeed < - SPEED_ERR_THRESHOLD)){
+            integratorRightVal = oldIntegratorRightVal + KPI_RIGHT * errorRightSpeed;
+            rightSpeedCmd = integratorRightVal + KPI_RIGHT * errorRightSpeed;
+            oldIntegratorRightVal = integratorRightVal;
+        }
+
+        RCLCPP_DEBUG(this->get_logger(), "errorLeftSpeed : %f", errorLeftSpeed);
+        RCLCPP_DEBUG(this->get_logger(), "errorRightSpeed : %f", errorRightSpeed);
+   }
     
     // ---- Private variables ----
 
@@ -215,11 +278,23 @@ private:
     
     //Motors feedback variables
     float currentAngle;
+    float currentLeftSpeed;
+    float currentRightSpeed;
 
     //Manual Mode variables (with joystick control)
     bool reverse;
     float requestedThrottle;
     float requestedSteerAngle;
+
+    //Autonomous Mode variables 
+    float targetRightSpeed;
+    float targetLeftSpeed;
+    float leftSpeedCmd;
+    float rightSpeedCmd;
+    float oldIntegratorLeftVal;
+    float oldIntegratorRightVal;
+    float oldSpeedLeft;
+    float oldSpeedRight;
 
     //Control variables
     uint8_t leftRearPwmCmd;
