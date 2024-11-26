@@ -10,23 +10,23 @@ from interfaces.msg import Ultrasonic
 
 
 # We indicate which node we want to test : in our case obstacle_detection
-@pytest.mark.launch_test
-def generate_test_description():
-    return LaunchDescription([
-        LaunchNode(
-            package='detection',
-            executable='obstacles_detection',
-            name='obstacles_detection',
-            output='screen'
-        ),
-        launch_testing.actions.ReadyToTest(),
+# @pytest.mark.launch_test
+# def generate_test_description():
+#     return LaunchDescription([
+#         LaunchNode(
+#             package='detection',
+#             executable='obstacles_detection',
+#             name='obstacles_detection',
+#             output='screen'
+#         ),
+#         launch_testing.actions.ReadyToTest(),
 
-    ])
+#     ])
     
 # We precise here the different inputs of the test
 #(we can make several one in one time to avoid redundancy)
 #We test several cases : above, below and equal to the detection limit    
-@pytest.mark.parametrize('front_left sensor value, front_right sensor value, expected_output', [
+@pytest.mark.parametrize('front_left_sensor_value, front_right_sensor_value, expected_output', [
     (100, 100, False),
     (10, 100, True),
     (100, 10, True),
@@ -36,7 +36,7 @@ def generate_test_description():
     (100, 50, True)
 ])
 def test_obstacles_detection(front_left_sensor_value:int, front_right_sensor_value:int, expected_output:Bool):
-    rclpy.init()
+    #rclpy.init()
     
     # We create an other test node that will communicate with the obstacles_detection node
     test_node = rclpy.create_node('test_node')
@@ -69,7 +69,6 @@ def test_obstacles_detection(front_left_sensor_value:int, front_right_sensor_val
     #    rclpy.spin_once(test_node, timeout_sec=0.1)
 
     # Result
-    assert 0 == 1
     assert received_output, "No received messages"
     assert received_output[0] == expected_output, "Expected : {expected_output}, Received : {received_output[0]}"
     

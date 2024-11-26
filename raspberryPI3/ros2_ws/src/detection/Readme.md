@@ -36,6 +36,12 @@ How to use
 
 How to test 
 ----------
+There are two available test : 
+- one unit test that tests the detection function
+- one integration test to test the node, this one is still a work in progress
+
+To run a test : 
+
 * To run every test : ``colcon test --event-handlers console_direct+ --packages-select detection``
 
-* To run just the integration test : ``colcon test --event-handlers console_direct+ --packages-select detection --pytest-args test/test_obstacles_detection.py``
+* To run just the unit test : ``colcon test --event-handlers console_direct+ --packages-select detection --pytest-args test/test_unit_obstacles_detection.py``
