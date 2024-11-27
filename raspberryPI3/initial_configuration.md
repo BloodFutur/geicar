@@ -246,3 +246,11 @@ echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 echo "source ~/ros2_ws/install/local_setup.bash" >> ~/.bashrc
 echo "export ROS_DOMAIN_ID=XX" >> ~/.bashrc
 ```
+
+### Automatic time/date synchronization
+
+1. Switch to root user `su`
+2. Copy the `time_update.sh` file to your root directory (`/root/time_update.sh`)
+3. Add the executable right to the file: `chmod +x time_update.sh`
+4. Add a cronjob with: `crontab -e` (be sure to be connected as root or do `sudo` otherwise)
+5. In the file opend by the previous command, add the following: `@reboot sh $HOME/time_update.sh`
