@@ -59,6 +59,11 @@ def generate_launch_description():
         emulate_tty=True
     )
 
+    obstacles_detection_node = Node(
+        package="detection",
+        executable="obstacles_detection_node",
+        emulate_tty=True
+    )
 
     ld.add_action(joystick_node)
     ld.add_action(joystick_to_cmd_node)
@@ -68,5 +73,6 @@ def generate_launch_description():
     ld.add_action(imu_filter_madgwick_node)
     ld.add_action(system_check_node)
     ld.add_action(rosbridge_server_node)
+    ld.add_action(obstacles_detection_node)
 
     return ld

@@ -22,13 +22,14 @@ class ObstaclesDetection(Node):
         self.detection_distance = self.declare_parameter('detection_distance', 50).get_parameter_value().integer_value
 
     def obstacle_detected(self, msg_us: Ultrasonic):
-        # We only send a true msg if we detect an obstacle so we don't need a false case
-        # We do that so it's easier for the future subscribers of the /obstacles_detection subscribers to process the msg
-        # And bc we don't need to change anything in the behavior of the car if there is no obstacles
+        # We publish a false message if there is no obstacles and true message if there are some
+        # We do that so the car can easily restart when there is no more obstacles (see car_control_node)
         self.get_logger().debug(f'Current sensors values : front right : {msg_us.front_right} front left :  {msg_us.front_left} ')
         response = Bool()
         response.data = detection(msg_us, self.detection_distance)
         if response.data:
+            self.publisher.publish(response)
+        else:
             self.publisher.publish(response)
 
 
