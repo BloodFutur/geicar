@@ -26,6 +26,17 @@ As of today this package should be available for binary installation on all acti
 
 If for some reason you cannot install the binaries, follow the directions below to compile from source.
 
+## Dependencies
+
+```sh
+pip install ultralytics
+pip uninstall numpy
+pip install numpy==1.26.4 
+```
+Ultralytics library is used for the Licence plate detection with Yolo
+We need this version of numpy because it needs numpy1 and there are other dependencies conflicts if not this version
+
+
 ## Building from Source
 
 Clone/Download the source code into your workspace:
