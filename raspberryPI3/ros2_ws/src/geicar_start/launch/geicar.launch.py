@@ -3,6 +3,7 @@ from launch_ros.actions import Node
 import os
 from ament_index_python.packages import get_package_share_directory
 
+
 def generate_launch_description():
     ld = LaunchDescription()
 
@@ -36,7 +37,6 @@ def generate_launch_description():
         emulate_tty=True
     )
 
-
     config_dir = os.path.join(get_package_share_directory('imu_filter_madgwick'), 'config')
 
     imu_filter_madgwick_node = Node(
@@ -46,13 +46,12 @@ def generate_launch_description():
         emulate_tty=True
     )
 
-
     system_check_node = Node(
         package="system_check",
         executable="system_check_node",
         emulate_tty=True
     )
-    
+
     rosbridge_server_node = Node(
         package="rosbridge_server",
         executable="rosbridge_websocket",

@@ -122,6 +122,7 @@ private:
         currentRightSpeed = motorsFeedback.right_rear_speed;
     }
 
+    //true if there is an obstacle and false if there is not
     void obstaclesDetectionCallback(const std_msgs::msg::Bool & detection){
         this->obstacle_detected = detection.data ;
     }
@@ -156,7 +157,7 @@ private:
 
             //Autonomous Mode
             } else if (mode==1){
-                if (this->obstacle_detected){
+                if (!this->obstacle_detected){
                     updateSpeedCmd();
                     
                     RCLCPP_DEBUG(this->get_logger(), "leftSpeedCmd : %f", leftSpeedCmd);
