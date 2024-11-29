@@ -448,6 +448,7 @@ void ImuFilterMadgwickRos::publishFilteredMsg(
     // create and publish filtered IMU message
     ImuMsg imu_msg = *imu_msg_raw;
 
+    imu_msg.header.frame_id = FRAME_ID;
     imu_msg.orientation.w = q0;
     imu_msg.orientation.x = q1;
     imu_msg.orientation.y = q2;
