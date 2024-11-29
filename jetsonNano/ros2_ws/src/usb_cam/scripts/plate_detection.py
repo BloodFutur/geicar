@@ -17,7 +17,7 @@ class PlateDetection(Node):
         self.bridge = CvBridge()
 
         # Load the YOLOv8 model
-        self.model = YOLO("/home/pi/geicar/PlaqueDetection/runs/detect/train7/weights/best.pt")  # Put the path of the AI model
+        self.model = YOLO("/root/geicar/PlaqueDetection/runs/detect/train7/weights/best.pt")  # Put the path of the AI model
         self.get_logger().info("YOLOv8 model loaded successfully!")
 
         # Subscribe to the camera topic
@@ -63,8 +63,8 @@ class PlateDetection(Node):
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
         # Show annoted image on OpenCV
-        cv2.imshow("Plate Detection", annotated_image)
-        cv2.waitKey(5)
+        #cv2.imshow("Plate Detection", annotated_image)
+        #cv2.waitKey(5)
 
         # Publish annoted image in a ROS topic
         try:
