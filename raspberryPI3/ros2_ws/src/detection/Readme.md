@@ -9,7 +9,7 @@ It adds :
 * ``obstacles_detection`` node 
 * ``/obstacles_detection`` topic
 
-The node will publish a True message on the topic every time an obstacle is detected within 50 cm of the front-left or front-right sensors.
+The node will publish a True message on the topic every time an obstacle is detected within 50 cm of the front-left or front-right sensors. Otherwise, it publish a false message.
 
 The package contains :
 * ``detection`` folder : it contains the node ``obstacles_detection.py``

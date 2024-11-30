@@ -9,10 +9,13 @@
 #include "interfaces/msg/joystick_order.hpp"
 
 #include "std_srvs/srv/empty.hpp"
+#include "std_msgs/msg/bool.hpp"
+
 
 #include "../include/car_control/steeringCmd.h"
 #include "../include/car_control/propulsionCmd.h"
 #include "../include/car_control/car_control_node.h"
+
 
 using namespace std;
 using placeholders::_1;
@@ -37,6 +40,8 @@ public:
         currentLeftSpeed = 0.0;
         currentRightSpeed = 0.0;
         
+        obstacle_detected = false ;
+        
 
         publisher_can_= this->create_publisher<interfaces::msg::MotorsOrder>("motors_order", 10);
 
@@ -53,9 +58,9 @@ public:
         subscription_steering_calibration_ = this->create_subscription<interfaces::msg::SteeringCalibration>(
         "steering_calibration", 10, std::bind(&car_control::steeringCalibrationCallback, this, _1));
 
-
+        subscription_obstacles_detection_ = this->create_subscription<std_msgs::msg::Bool>(
+        "obstacles_detection", 10, std::bind(&car_control::obstaclesDetectionCallback, this, _1));
         
-
         server_calibration_ = this->create_service<std_srvs::srv::Empty>(
                             "steering_calibration", std::bind(&car_control::steeringCalibration, this, std::placeholders::_1, std::placeholders::_2));
 
@@ -117,6 +122,10 @@ private:
         currentRightSpeed = motorsFeedback.right_rear_speed;
     }
 
+    //true if there is an obstacle and false if there is not
+    void obstaclesDetectionCallback(const std_msgs::msg::Bool & detection){
+        this->obstacle_detected = detection.data ;
+    }
 
     /* Update PWM commands : leftRearPwmCmd, rightRearPwmCmd, steeringPwmCmd
     *
@@ -148,15 +157,20 @@ private:
 
             //Autonomous Mode
             } else if (mode==1){
-                
-                updateSpeedCmd();
-                
-                RCLCPP_DEBUG(this->get_logger(), "leftSpeedCmd : %f", leftSpeedCmd);
-                RCLCPP_DEBUG(this->get_logger(), "rightSpeedCmd : %f", rightSpeedCmd);
+                if (!this->obstacle_detected){
+                    updateSpeedCmd();
+                    
+                    RCLCPP_DEBUG(this->get_logger(), "leftSpeedCmd : %f", leftSpeedCmd);
+                    RCLCPP_DEBUG(this->get_logger(), "rightSpeedCmd : %f", rightSpeedCmd);
 
-                autonomousPropulsionCmd(rightSpeedCmd, rightRearPwmCmd);
-                autonomousPropulsionCmd(leftSpeedCmd, leftRearPwmCmd);
-                
+                    autonomousPropulsionCmd(rightSpeedCmd, rightRearPwmCmd);
+                    autonomousPropulsionCmd(leftSpeedCmd, leftRearPwmCmd);
+                }
+                else{
+                    leftRearPwmCmd = STOP;
+                    rightRearPwmCmd = STOP;
+                    steeringPwmCmd = STOP;
+                } 
             }
         }
 
@@ -301,6 +315,9 @@ private:
     uint8_t rightRearPwmCmd;
     uint8_t steeringPwmCmd;
 
+    //Detection variables
+    bool obstacle_detected;
+
     //Publishers
     rclcpp::Publisher<interfaces::msg::MotorsOrder>::SharedPtr publisher_can_;
     rclcpp::Publisher<interfaces::msg::SteeringCalibration>::SharedPtr publisher_steeringCalibration_;
@@ -309,6 +326,7 @@ private:
     rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscription_joystick_order_;
     rclcpp::Subscription<interfaces::msg::MotorsFeedback>::SharedPtr subscription_motors_feedback_;
     rclcpp::Subscription<interfaces::msg::SteeringCalibration>::SharedPtr subscription_steering_calibration_;
+    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscription_obstacles_detection_ ;
 
     //Timer
     rclcpp::TimerBase::SharedPtr timer_;
