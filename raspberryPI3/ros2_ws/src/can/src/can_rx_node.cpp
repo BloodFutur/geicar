@@ -12,6 +12,8 @@
 #include "std_msgs/msg/string.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/msg/magnetic_field.hpp"
+#include "sensor_msgs/msg/nav_sat_fix.hpp"
+#include "sensor_msgs/msg/nav_sat_status.hpp"
 #include "interfaces/msg/motors_feedback.hpp"
 #include "interfaces/msg/general_data.hpp"
 #include "interfaces/msg/steering_calibration.hpp"
@@ -33,11 +35,13 @@ public:
         publisher_imu_raw_ = this->create_publisher<sensor_msgs::msg::Imu>("imu/data_raw", 10);
         publisher_imu_mag_ = this->create_publisher<sensor_msgs::msg::MagneticField>("imu/mag", 10);
         publisher_gnss_ = this->create_publisher<interfaces::msg::Gnss>("gnss_data", 10);
+        publisher_navsatfix_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("/gps/fix", 10);
         publisher_motorsFeedback_ = this->create_publisher<interfaces::msg::MotorsFeedback>("motors_feedback", 10);
         publisher_generalData_ = this->create_publisher<interfaces::msg::GeneralData>("general_data", 10);
         publisher_steeringCalibration_ = this->create_publisher<interfaces::msg::SteeringCalibration>("steering_calibration", 10);
         publisher_systemCheck_ = this->create_publisher<interfaces::msg::SystemCheck>("system_check", 10);
 
+        this->declare_parameter("gps_shift_fix",true);
 
         if (initCommunication()==0){
             readData(); 
@@ -210,6 +214,50 @@ private:
                 gnss_msg.vacc = vAcc;
 
                 publisher_gnss_->publish(gnss_msg);
+
+                // Convert to NavSatFix
+                auto navsat_msg = sensor_msgs::msg::NavSatFix();
+                bool use_gps_shift_fix = this->get_parameter("gps_shift_fix").as_bool();
+                navsat_msg.header.stamp = this->get_clock()->now();
+                navsat_msg.header.frame_id = "gps";
+
+                navsat_msg.latitude = latitude;
+                navsat_msg.longitude = longitude;
+                navsat_msg.altitude = altitude;
+
+                navsat_msg.status.service = sensor_msgs::msg::NavSatStatus::SERVICE_GPS;
+
+                if (quality <= 0) {
+                    navsat_msg.status.status = sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX;  // Unable to fix position
+                } else if (quality == 1) {
+                    navsat_msg.status.status = sensor_msgs::msg::NavSatStatus::STATUS_FIX;  // Unaugmented fix
+                } else if (quality == 2) {
+                    navsat_msg.status.status = sensor_msgs::msg::NavSatStatus::STATUS_SBAS_FIX;  // Satellite augmentation
+                } else if (quality == 4 || quality == 5 || quality == 6) {
+                    if (use_gps_shift_fix){
+                        double shift_lat = 0.000023239;
+                        double shift_long = 0.000022377;
+                        navsat_msg.latitude += shift_lat;
+                        navsat_msg.longitude += shift_long;
+                    }
+                    navsat_msg.status.status = sensor_msgs::msg::NavSatStatus::STATUS_GBAS_FIX;  // Ground augmentation
+                } else {
+                    navsat_msg.status.status = sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX;  // Unexpected value
+                }
+
+                // Position covariance
+                double hacc_m = hAcc > 0 ? hAcc / 1000.0 : 100.0;  // Convert to meters (default 100 m)
+                double vacc_m = vAcc > 0 ? vAcc / 1000.0 : 100.0;
+
+                navsat_msg.position_covariance = {
+                    hacc_m * hacc_m, 0.0, 0.0,
+                    0.0, hacc_m * hacc_m, 0.0,
+                    0.0, 0.0, vacc_m * vacc_m
+                };
+                navsat_msg.position_covariance_type = sensor_msgs::msg::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
+
+                // Publish NavSatFix message
+                publisher_navsatfix_->publish(navsat_msg);
 
             /* Update and publish Magnetic field
             * Read values in milligauss [mG]
@@ -386,6 +434,7 @@ private:
     //Publishers
     rclcpp::Publisher<interfaces::msg::Ultrasonic>::SharedPtr publisher_us_;
     rclcpp::Publisher<interfaces::msg::Gnss>::SharedPtr publisher_gnss_;
+    rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr publisher_navsatfix_;
 
     rclcpp::Publisher<interfaces::msg::MotorsFeedback>::SharedPtr publisher_motorsFeedback_;
     rclcpp::Publisher<interfaces::msg::GeneralData>::SharedPtr publisher_generalData_;
