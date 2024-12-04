@@ -1,63 +1,66 @@
 {
-    "name": "ROS 2 Development Container",
-    "privileged": true,
-    "remoteUser": "pi",
-    "build": {
-      "dockerfile": "Dockerfile",
-      "args": {
-        "USERNAME": "pi"
-      }
-    },
-    "workspaceFolder": "/home/pi/geicar",
-    "workspaceMount": "source=${localWorkspaceFolder},target=/home/pi/geicar/,type=bind",
-    "customizations": {
-      "vscode": {
-        "extensions":[
-            "ms-vscode.cpptools",
-            "ms-vscode.cpptools-themes",
-            "twxs.cmake",
-            "donjayamanne.python-extension-pack",
-            "eamodio.gitlens",
-            "ms-iot.vscode-ros",
-            "ms-python.python",
-            "smilerobotics.urdf",
-            "ms-python.black-formatter",
-            "ms-python.flake8"
+  "name": "ROS 2 Development Container",
+  "privileged": true,
+  "remoteUser": "pi",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "USERNAME": "pi"
+    }
+  },
+  "workspaceFolder": "/home/pi/geicar",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/pi/geicar/,type=bind",
+  "customizations": {
+    "vscode": {
+      "extensions":[
+          "ms-vscode.cpptools",
+          "ms-vscode.cpptools-themes",
+          "twxs.cmake",
+          "donjayamanne.python-extension-pack",
+          "eamodio.gitlens",
+          "ms-iot.vscode-ros",
+          "ms-python.python",
+          "smilerobotics.urdf",
+          "ms-python.black-formatter",
+          "ms-python.flake8",
+          "ms-toolsai.jupyter",
+          "ms-python.vscode-pylance",
+          "ms-toolsai.vscode-ai",
+          "pytorch.pytorch-snippets",
+          "tensorflow.vscode-tensorflow"
+      ],
+      "settings": {
+        "flake8.args": [
+          "--ignore=E501"
         ],
-        "settings": {
-          "flake8.args": [
-            "--ignore=E501"
-          ],
-          "terminal.integrated.profiles.linux": {
-              "bash (Host)": {
-                  "path": "bash"
-              }
-          },
-          "terminal.integrated.defaultProfile.linux": "bash"
-        }
+        "terminal.integrated.profiles.linux": {
+            "bash (Host)": {
+                "path": "bash"
+            }
+        },
+        "terminal.integrated.defaultProfile.linux": "bash"
       }
-    },
-    "containerEnv": {
-      "DISPLAY": "unix:0",
-      "LIBGL_ALWAYS_SOFTWARE": "1", // Needed for software rendering of opengl
-      "ROS_AUTOMATIC_DISCOVERY_RANGE": "LOCALHOST",
-      "ROS_DOMAIN_ID": "1"
-    },
-    "runArgs": [
-      "-p3000:3000",
-      "-p2222:22",
-      "-p9090:9090",
-      "-e", "DISPLAY=${env:DISPLAY}",
-      "--network=host",
-      "--name=geicar",
-      "-v=/dev:/dev",
-      // "--runtime=nvidia", // NVIDIA GPU support
-      "--device=/dev/dri:/dev/dri" // Intel GPU support
-    ],
-    "mounts": [
-      //"source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
-      "source=/dev/dri,target=/dev/dri,type=bind,consistency=cached"
-    ],
-    "postCreateCommand": "bash ./.devcontainer/postCreateCommand.sh",
-    "postStartCommand": "sudo service ssh restart"
-  }
+    }
+  },
+  "containerEnv": {
+    "DISPLAY": "unix:0",
+    "LIBGL_ALWAYS_SOFTWARE": "1",
+    "ROS_AUTOMATIC_DISCOVERY_RANGE": "LOCALHOST",
+    "ROS_DOMAIN_ID": "1"
+  },
+  "runArgs": [
+    "-p3000:3000",
+    "-p2222:22",
+    "-p9090:9090",
+    "-e", "DISPLAY=${env:DISPLAY}",
+    "--network=host",
+    "--name=geicar",
+    "-v=/dev:/dev",
+    "--device=/dev/dri:/dev/dri"
+  ],
+  "mounts": [
+    "source=/dev/dri,target=/dev/dri,type=bind,consistency=cached"
+  ],
+  "postCreateCommand": "bash ./.devcontainer/postCreateCommand.sh",
+  "postStartCommand": "sudo service ssh restart"
+}
