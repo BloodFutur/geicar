@@ -21,11 +21,18 @@
     <main id="main-container">
         <!-- Data section on the left -->
         <section id="data-section" aria-label="Instructions and Connection Status">
-            <p>To see this page update:</p>
             <ul>
-                <li>Run a Rosbridge connection at <code>ws://localhost:9090</code></li>
-                <li>Start publishing ROS messages to <code>/my_topic</code></li>
+                <li>Select the IP you used to connect to the vehicle </li>
             </ul>
+
+            <label>
+                <input type="radio" name="option" value="192.168.1.1" onchange="updateROSIP(this)">
+                192.168.1.1
+            </label>
+            <label>
+                <input type="radio" name="option" value="10.105.1.168" onchange="updateROSIP(this)" checked>
+                10.105.1.168
+            </label>
 
             <hr />
 

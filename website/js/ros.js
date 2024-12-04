@@ -1,41 +1,90 @@
-// Create ros object to communicate over the Rosbridge connection
-const ros = new ROSLIB.Ros({ url: "ws://localhost:9090" });
+// Configuration
+const DEFAULT_ROSBRIDGE_IP = "10.105.1.168";
+const ROSBRIDGE_PORT = 9090;
+let rosbridgeIP = DEFAULT_ROSBRIDGE_IP;
 
-const statusEl = document.getElementById("status");
-// When the Rosbridge server connects, fill the span with id "status" with "successful"
-ros.on("connection", () => {
-    console.log('Connected to rosbridge websocket server.');
-    statusEl.textContent = 'Connected';
-    statusEl.className = 'connected';
-});
+let ros = initializeROSConnection(rosbridgeIP);
 
-// When the Rosbridge server experiences an error, fill the "status" span with the returned error
-ros.on("error", (error) => {
-    console.log('Error connecting to websocket server:', error);
-    statusEl.textContent = 'Connection Error';
-    statusEl.className = 'error';
-});
+function initializeROSConnection(ip) {
+    return new ROSLIB.Ros({
+        url: `ws://${ip}:${ROSBRIDGE_PORT}`,
+    });
+}
 
-// When the Rosbridge server shuts down, fill the "status" span with "closed"
-ros.on("close", () => {
-    console.log('Connection to websocket server closed.');
-    statusEl.textContent = 'Connection Closed';
-    statusEl.className = 'closed';
-});
+function updateROSIP(input) {
+    rosbridgeIP = input.value;
+    ros.close();
+    ros = initializeROSConnection(rosbridgeIP);
+    attachROSEventHandlers(ros);
+    console.log(`Updated ROSBridge IP to: ${rosbridgeIP}`);
+}
 
-// It is to show that the website can communicate with ROS
-// In the future it will be replaced by real topics
-// Create a listener for /my_topic
-const my_topic_listener = new ROSLIB.Topic({
+function attachROSEventHandlers(rosInstance) {
+    const statusEl = document.getElementById("status");
+    
+    rosInstance.on("connection", () => {
+        console.log("Connected to rosbridge websocket server.");
+        updateStatusUI(statusEl, "Connected", "connected");
+    });
+
+    rosInstance.on("error", (error) => {
+        console.error("Error connecting to websocket server:", error);
+        updateStatusUI(statusEl, "Connection Error", "error");
+    });
+
+    rosInstance.on("close", () => {
+        console.log("Connection to websocket server close.");
+        updateStatusUI(statusEl, "Connection Closed", "closed");
+    });
+}
+
+function updateStatusUI(element, message, statusClass) {
+    if (element) {
+        element.textContent = message;
+        element.className = statusClass;
+    } else {
+        console.warn("Status element not found!");
+    }
+}
+
+attachROSEventHandlers(ros);
+
+function createTopicListener(rosInstance, topicName, messageType, callback) {
+    return new ROSLIB.Topic({
+        ros: rosInstance,
+        name: topicName,
+        messageType: messageType,
+    }).subscribe(callback);
+}
+
+const gpsTopicListener = createTopicListener(
     ros,
-    name: "/my_topic",
-    messageType: "std_msgs/String",
-});
+    "/gps/fix",
+    "sensor_msgs/msg/NavSatFix",
+    (message) => {
+        handleGPSMessage(message);
+    }
+);
 
-// When we receive a message on /my_topic, add its data as a list item to the "messages" ul
-my_topic_listener.subscribe((message) => {
+function handleGPSMessage(message) {
     const ul = document.getElementById("messages");
+    if(!ul) {
+        console.error("Messages element not found!");
+    }
+
+    const coords = `${message.latitude}; ${message.longitude}`;
     const newMessage = document.createElement("li");
-    newMessage.appendChild(document.createTextNode(message.data));
+    newMessage.appendChild(document.createTextNode(coords));
     ul.appendChild(newMessage);
-});
+
+    if (typeof L !== "undefined" && typeof map !== "undefined") {
+        L.circle([message.latitude, message.longitude], {
+            color: "red",
+            fillColor: "#f03",
+            fillOpacity: 0.5,
+            radius: 0.2,
+        }).addTo(map);
+    } else {
+        console.warn("Leaflet map is not defined.");
+    }
+}
