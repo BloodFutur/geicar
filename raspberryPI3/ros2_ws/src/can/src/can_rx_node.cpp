@@ -287,7 +287,7 @@ private:
                 imu_mag_msg.magnetic_field.z = mag_z * pow(10,-7);
 
                 imu_mag_msg.header.stamp = rclcpp::Clock().now();
-
+                imu_mag_msg.header.frame_id = "base_link";
                 publisher_imu_mag_->publish(imu_mag_msg); 
 
             /* Update Angular Velocity
@@ -345,6 +345,7 @@ private:
                 imu_raw_msg.angular_velocity.z = ang_vel_z * pow(1.7453,-5);    //Conversion to [rad/s]
 
                 imu_raw_msg.header.stamp = rclcpp::Clock().now();
+                
                 publisher_imu_raw_->publish(imu_raw_msg);
 
 
