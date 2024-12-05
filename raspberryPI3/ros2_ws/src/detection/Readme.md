@@ -9,7 +9,7 @@ It adds :
 * ``obstacles_detection`` node 
 * ``/obstacles_detection`` topic
 
-The node will publish a True message on the topic every time an obstacle is detected within 50 cm of the front-left or front-right sensors. Otherwise, it publish a false message.
+The node will publish a True message on the topic every time an obstacle is detected within 50 cm of the front-left or front-right sensors. Otherwise, it publish a False message.
 
 The package contains :
 * ``detection`` folder : it contains the node ``obstacles_detection.py``
@@ -30,7 +30,7 @@ Use the following command (be sure to be in `~/geicar/raspberryPI3/ros2_ws` befo
 How to use
 ---------
 
-* To start the node : ```ros2 run detection obstacles_detection```
+* To start the node : ```ros2 run detection obstacles_detection_node```
 
 * to listen the topic : ```ros2 topic echo /obstacles_detection ```
 
@@ -38,10 +38,11 @@ How to test
 ----------
 There are two available test : 
 - one unit test that tests the detection function
-- one integration test to test the node, this one is still a work in progress
+- one integration test to test the node communication with a test node
 
 To run a test : 
 
 * To run every test : ``colcon test --event-handlers console_direct+ --packages-select detection``
 
 * To run just the unit test : ``colcon test --event-handlers console_direct+ --packages-select detection --pytest-args test/test_unit_obstacles_detection.py``
+
