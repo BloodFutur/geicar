@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<annotation>
+    <image file="eu1.jpg">
+        <text>
+            <bounding_box x="396" y="340" w="203" h="46"/>
+            <text_data>Sample text for image 1</text_data>
+        </text>
+    </image>
+    <image file="eu2.jpg">
+        <text>
+            <bounding_box x="141" y="259" w="139" h="32"/>
+            <text_data>Sample text for image 2</text_data>
+        </text>
+    </image>
+    <image file="eu3.jpg">
+        <text>
+            <bounding_box x="348" y="185" w="91" h="21"/>
+            <text_data>Sample text for image 3</text_data>
+        </text>
+    </image>
+</annotation>
