@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CompressedImage
 from cv_bridge import CvBridge
 from ultralytics import YOLO  # To use YOLOv8
 
@@ -32,6 +32,11 @@ class PlateDetection(Node):
         self.pub = self.create_publisher(
             Image,
             '/plate_detection',  # Topic for the annoted images
+            10
+        )
+        self.pub_compressed = self.create_publisher(
+            CompressedImage,
+            '/plate_detection/compressed',
             10
         )
 
@@ -69,7 +74,9 @@ class PlateDetection(Node):
         # Publish annoted image in a ROS topic
         try:
             annotated_msg = self.bridge.cv2_to_imgmsg(annotated_image, encoding="bgr8")
+            annotated_msg_compressed = self.bridge.cv2_to_compressed_imgmsg(annotated_image, dst_format='jpg')
             self.pub.publish(annotated_msg)
+            self.pub_compressed.publish(annotated_msg_compressed)
             self.get_logger().info("Published annotated image on /plate_detection")
         except Exception as e:
             self.get_logger().error(f"Failed to publish image: {e}")
