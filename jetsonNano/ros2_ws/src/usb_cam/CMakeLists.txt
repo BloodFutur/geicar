@@ -47,7 +47,7 @@ rclcpp_components_register_node(${PROJECT_NAME}_node
 )
 
 install(
-  PROGRAMS scripts/show_image.py scripts/plate_detection.py
+  PROGRAMS scripts/show_image.py scripts/plate_detection.py scripts/license_char_detection.py
   DESTINATION lib/${PROJECT_NAME})
 
 ament_auto_package(

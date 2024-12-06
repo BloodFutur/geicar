@@ -46,10 +46,24 @@ def generate_launch_description():
         emulate_tty=True
     )
 
+    # Char License plate detection node
+    license_char_detection_node = Node(
+        package='usb_cam',  # name of the package where you can find the .py script of the plate detection
+        executable='license_char_detection.py',  # Name of the Python file
+        name='license_char_detection',  # Name of the ROS node
+        output='screen',
+        parameters=[{
+            'camera_topic': '/image_raw',  # If needed you can change the name of the camera topic
+            'detection_threshold': 0.5,  
+        }],
+        emulate_tty=True
+    )
 
-    ld.add_action(lidar_node)
-    ld.add_action(camera_node)
-    ld.add_action(system_check_ack_node)
-    ld.add_action(plate_detection_node)
+
+    #ld.add_action(lidar_node)
+    #ld.add_action(camera_node)
+    #ld.add_action(system_check_ack_node)
+    #ld.add_action(plate_detection_node)
+    ld.add_action(license_char_detection_node)
 
     return ld
