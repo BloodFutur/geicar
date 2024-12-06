@@ -36,6 +36,11 @@ pip install numpy==1.26.4
 Ultralytics library is used for the Licence plate detection with Yolo
 We need this version of numpy because it needs numpy1 and there are other dependencies conflicts if not this version
 
+```sh
+pip install pytesseract
+sudo apt-get install tesseract-ocr
+```
+For the License Plate character detection we used the Python-tesseract, an optical character recognition (OCR) tool for python
 
 ## Building from Source
 

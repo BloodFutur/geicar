@@ -61,8 +61,8 @@ def generate_launch_description():
 
 
     #ld.add_action(lidar_node)
-    #ld.add_action(camera_node)
-    #ld.add_action(system_check_ack_node)
+    ld.add_action(camera_node)
+    ld.add_action(system_check_ack_node)
     #ld.add_action(plate_detection_node)
     ld.add_action(license_char_detection_node)
 
