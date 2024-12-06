@@ -34,6 +34,7 @@ ament_target_dependencies(imu_filter_madgwick
   tf2_geometry_msgs
   tf2_ros
 )
+
 rclcpp_components_register_nodes(imu_filter_madgwick "ImuFilterMadgwickRos")
 target_compile_definitions(imu_filter_madgwick
   PRIVATE "IMU_FILTER_MADGWICK_CPP_BUILDING_DLL")
@@ -42,6 +43,15 @@ add_executable(imu_filter_madgwick_node src/imu_filter_node.cpp)
 target_link_libraries(imu_filter_madgwick_node imu_filter_madgwick)
 ament_target_dependencies(imu_filter_madgwick_node
   rclcpp)
+
+# Add the imu_frame_id_modifier_node target
+add_executable(imu_frame_id_modifier_node src/imu_frame_id_modifier.cpp)
+
+# Link dependencies to imu_frame_id_modifier_node
+ament_target_dependencies(imu_frame_id_modifier_node
+  rclcpp
+  sensor_msgs
+)
 
 install(TARGETS
   imu_filter_madgwick
@@ -58,6 +68,11 @@ install(
 
 install(TARGETS
   imu_filter_madgwick_node
+  DESTINATION lib/${PROJECT_NAME})
+
+# Install imu_frame_id_modifier_node executable
+install(TARGETS
+  imu_frame_id_modifier_node
   DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY

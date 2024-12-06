@@ -488,7 +488,7 @@ void ImuFilterMadgwickRos::publishFilteredMsg(
         tf2::Matrix3x3(tf2::Quaternion(q1, q2, q3, q0))
             .getRPY(rpy.vector.x, rpy.vector.y, rpy.vector.z);
 
-        rpy.header = imu_msg_raw->header;
+        rpy.header = imu_msg_raw->header;  //A PEUT-ÊTRE CHANGER
         rpy_filtered_debug_publisher_->publish(rpy);
     }
 }
