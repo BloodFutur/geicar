@@ -6,16 +6,37 @@ let rosbridgeIP = DEFAULT_ROSBRIDGE_IP;
 let ros = initializeROSConnection(rosbridgeIP);
 
 function initializeROSConnection(ip) {
-    return new ROSLIB.Ros({
+    let rosInstance = new ROSLIB.Ros({
         url: `ws://${ip}:${ROSBRIDGE_PORT}`,
     });
+    attachROSEventHandlers(rosInstance);
+    attachTopicListeners(rosInstance);
+
+    return rosInstance;
+}
+
+function attachTopicListeners(rosInstance) {
+    const gpsTopicListener = createTopicListener(
+        rosInstance,
+        "/gps/fix",
+        "sensor_msgs/msg/NavSatFix",
+        (message) => {
+            handleGPSMessage(message);
+        }
+    );
+    
+    const plateDetectionTopicListener = createTopicListener(
+        rosInstance,
+        "plate_detection/compressed",
+        "sensor_msgs/msg/CompressedImage",
+        handlePlateDetection,
+    )
 }
 
 function updateROSIP(input) {
     rosbridgeIP = input.value;
     ros.close();
     ros = initializeROSConnection(rosbridgeIP);
-    attachROSEventHandlers(ros);
     console.log(`Updated ROSBridge IP to: ${rosbridgeIP}`);
 }
 
@@ -47,31 +68,14 @@ function updateStatusUI(element, message, statusClass) {
     }
 }
 
-attachROSEventHandlers(ros);
-
 function createTopicListener(rosInstance, topicName, messageType, callback) {
+    console.log("createdTopicListener" + topicName)
     return new ROSLIB.Topic({
         ros: rosInstance,
         name: topicName,
         messageType: messageType,
     }).subscribe(callback);
 }
-
-const gpsTopicListener = createTopicListener(
-    ros,
-    "/gps/fix",
-    "sensor_msgs/msg/NavSatFix",
-    (message) => {
-        handleGPSMessage(message);
-    }
-);
-
-const plateDetectionTopicListener = createTopicListener(
-    ros,
-    "plate_detection/compressed",
-    "sensor_msgs/msg/CompressedImage",
-    handlePlateDetection,
-)
 
 function handleGPSMessage(message) {
     const ul = document.getElementById("messages");
