@@ -66,9 +66,16 @@ const gpsTopicListener = createTopicListener(
     }
 );
 
+const plateDetectionTopicListener = createTopicListener(
+    ros,
+    "plate_detection/compressed",
+    "sensor_msgs/msg/CompressedImage",
+    handlePlateDetection,
+)
+
 function handleGPSMessage(message) {
     const ul = document.getElementById("messages");
-    if(!ul) {
+    if (!ul) {
         console.error("Messages element not found!");
     }
 
@@ -87,4 +94,14 @@ function handleGPSMessage(message) {
     } else {
         console.warn("Leaflet map is not defined.");
     }
+}
+
+function handlePlateDetection(message) {
+    const videoStream = document.getElementById('video-stream');
+    if(!videoStream) {
+        console.error("Video stream element not found!");
+    }
+
+    const base64Image = `data:image/jpeg;base64,${message.data}`;
+    videoStream.src = base64Image; 
 }
