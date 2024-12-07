@@ -46,3 +46,5 @@ To run a test :
 
 * To run just the unit test : ``colcon test --event-handlers console_direct+ --packages-select detection --pytest-args test/test_unit_obstacles_detection.py``
 
+* To run just the integration test : ``colcon test --event-handlers console_direct+ --packages-select detection --pytest-args test/test_integration_obstacles_detection.py``
+

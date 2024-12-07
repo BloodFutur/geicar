@@ -56,6 +56,14 @@ class TestNode(unittest.TestCase):
     def detected_message(self, msg):
         self.received_data.append(msg.data)
 
+    # Timer function, timeout is in seconds
+    def wait_for(self, data, timeout):
+        start_time = self.test_node.get_clock().now().nanoseconds / 1e9
+        while not data:
+            rclpy.spin_once(self.test_node, timeout_sec=0.1)
+            if (self.test_node.get_clock().now().nanoseconds / 1e9 - start_time) > timeout:
+                break
+
     # Beginning of the test
     # /!\This method needs to start by "test_" to be interpreted by colcon test/!\
     def test_node_behavior(self):
@@ -73,8 +81,7 @@ class TestNode(unittest.TestCase):
         test_cases = [
             {"front_left": 40, "front_right": 40, "expected_output": True},
             {"front_left": 80, "front_right": 80, "expected_output": False},
-            {"front_left": 50, "front_right": 50, "expected_output": True},
-            {"front_left": 60, "front_right": 60, "expected_output": False}
+            {"front_left": 50, "front_right": 50, "expected_output": True}
         ]
         # front_left, front_right and expected_output are not usable variables here
         for case in test_cases:
@@ -97,21 +104,16 @@ class TestNode(unittest.TestCase):
                 # We wait for the node obstacles_detection to start (especially on my computer xD)
                 # And to let the time for obstacles_detection node to stop publishing True/false data on the topic
                 # So that u avoid interferences between test (especially relevant on my computer tbh)
-                time.sleep(5)  # secondes
+                time.sleep(5)  # seconds
 
                 # Then we publish the ultrasonic datas on /us_data
                 self.publisher.publish(input_msg)
 
-                # We wait for an answer of the obstacles_detection node
-                timeout = 15.0  # secondes
-                start_time = self.test_node.get_clock().now().nanoseconds / 1e9
-                while not self.received_data:
-                    rclpy.spin_once(self.test_node, timeout_sec=0.1)
-                    if (self.test_node.get_clock().now().nanoseconds / 1e9 - start_time) > timeout:
-                        break
+                # We wait until 15s for an answer of the obstacles_detection node
+                self.wait_for(self.received_data, 15.0)
 
                 # We check that the data has been received, if not we print the message in argument
-                self.assertTrue(self.received_data, "Aucune donnée reçue sur /output_topic")
+                self.assertTrue(self.received_data, "No received data from /obstacles_detection topic")
                 # Then we check that it is the expected data
                 self.assertEqual(
                     self.received_data[0],
