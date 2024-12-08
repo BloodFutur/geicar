@@ -6,16 +6,37 @@ let rosbridgeIP = DEFAULT_ROSBRIDGE_IP;
 let ros = initializeROSConnection(rosbridgeIP);
 
 function initializeROSConnection(ip) {
-    return new ROSLIB.Ros({
+    let rosInstance = new ROSLIB.Ros({
         url: `ws://${ip}:${ROSBRIDGE_PORT}`,
     });
+    attachROSEventHandlers(rosInstance);
+    attachTopicListeners(rosInstance);
+
+    return rosInstance;
+}
+
+function attachTopicListeners(rosInstance) {
+    const gpsTopicListener = createTopicListener(
+        rosInstance,
+        "/gps/fix",
+        "sensor_msgs/msg/NavSatFix",
+        (message) => {
+            handleGPSMessage(message);
+        }
+    );
+    
+    const plateDetectionTopicListener = createTopicListener(
+        rosInstance,
+        "plate_detection/compressed",
+        "sensor_msgs/msg/CompressedImage",
+        handlePlateDetection,
+    )
 }
 
 function updateROSIP(input) {
     rosbridgeIP = input.value;
     ros.close();
     ros = initializeROSConnection(rosbridgeIP);
-    attachROSEventHandlers(ros);
     console.log(`Updated ROSBridge IP to: ${rosbridgeIP}`);
 }
 
@@ -47,9 +68,8 @@ function updateStatusUI(element, message, statusClass) {
     }
 }
 
-attachROSEventHandlers(ros);
-
 function createTopicListener(rosInstance, topicName, messageType, callback) {
+    console.log("createdTopicListener" + topicName)
     return new ROSLIB.Topic({
         ros: rosInstance,
         name: topicName,
@@ -57,18 +77,9 @@ function createTopicListener(rosInstance, topicName, messageType, callback) {
     }).subscribe(callback);
 }
 
-const gpsTopicListener = createTopicListener(
-    ros,
-    "/gps/fix",
-    "sensor_msgs/msg/NavSatFix",
-    (message) => {
-        handleGPSMessage(message);
-    }
-);
-
 function handleGPSMessage(message) {
     const ul = document.getElementById("messages");
-    if(!ul) {
+    if (!ul) {
         console.error("Messages element not found!");
     }
 
@@ -87,4 +98,14 @@ function handleGPSMessage(message) {
     } else {
         console.warn("Leaflet map is not defined.");
     }
+}
+
+function handlePlateDetection(message) {
+    const videoStream = document.getElementById('video-stream');
+    if(!videoStream) {
+        console.error("Video stream element not found!");
+    }
+
+    const base64Image = `data:image/jpeg;base64,${message.data}`;
+    videoStream.src = base64Image; 
 }
