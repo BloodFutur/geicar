@@ -60,7 +60,7 @@ jobs:
     - name: Test with colcon
       run: |
         source /opt/ros/humble/setup.bash
-        colcon test
+        colcon test --return-code-on-test-failure
 
     - name: Set latest commit status as ${{ job.status }}
       uses: myrotvorets/set-commit-status-action@master
@@ -120,7 +120,7 @@ jobs:
     - name: Test with colcon
       run: |
         source /opt/ros/humble/setup.bash
-        colcon test
+        colcon test --return-code-on-test-failure
 
     - name: Set latest commit status as ${{ job.status }}
       uses: myrotvorets/set-commit-status-action@master
