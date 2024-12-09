@@ -2,18 +2,17 @@ name: ROS2 CI
 
 on:
   pull_request:
-    types: [opened, synchronize]
-defaults:
-  run:
-    working-directory: ./raspberryPI3/ros2_ws
+    types: [opened, synchronize] 
 
 env:
   ROS_DISTRO: humble
 
 jobs:
-  ROS2-build:
+  RPi-build:
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+          working-directory: ./raspberryPI3/ros2_ws
     steps:
     - name: Get PR branch
       uses: xt0rted/pull-request-comment-branch@v1
@@ -61,7 +60,7 @@ jobs:
     - name: Test with colcon
       run: |
         source /opt/ros/humble/setup.bash
-        colcon test
+        colcon test --return-code-on-test-failure
 
     - name: Set latest commit status as ${{ job.status }}
       uses: myrotvorets/set-commit-status-action@master
@@ -70,3 +69,64 @@ jobs:
         sha: ${{ steps.comment-branch.outputs.head_sha }}
         token: ${{ secrets.GITHUB_TOKEN }}
         status: ${{ job.status }}
+  Jetson-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+          working-directory: ./jetsonNano/ros2_ws
+    steps:
+    - name: Get PR branch
+      uses: xt0rted/pull-request-comment-branch@v1
+      id: comment-branch
+
+    - name: Checkout PR branch
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ steps.comment-branch.outputs.head_ref }}
+
+    - name: Set up ROS 2
+      uses: ros-tooling/setup-ros@v0.7
+      with:
+        required-ros-distributions: humble
+        install-ros-dependencies: true
+
+    - name: Initialize rosdep
+      run: |
+        sudo rosdep init || echo "rosdep already initialized"
+        rosdep update
+
+    - name: Source ROS 2 Environment
+      run: |
+        source /opt/ros/humble/setup.bash
+
+    - name: Install Additional Dependencies
+      run: |
+        sudo apt update
+        sudo apt install ros-humble-rviz2 ros-humble-rosidl-default-generators -y
+
+    - name: Install Workspace Dependencies
+      run: |
+        rosdep install --from-paths src --ignore-src -r -y
+
+    - name: Clean Workspace
+      run: |
+        rm -rf build/ install/ log/
+
+    - name: Build with colcon
+      run: |
+        source /opt/ros/humble/setup.bash
+        colcon build --cmake-args -Wno-dev
+
+    - name: Test with colcon
+      run: |
+        source /opt/ros/humble/setup.bash
+        colcon test --return-code-on-test-failure
+
+    - name: Set latest commit status as ${{ job.status }}
+      uses: myrotvorets/set-commit-status-action@master
+      if: always()
+      with:
+        sha: ${{ steps.comment-branch.outputs.head_sha }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        status: ${{ job.status }}
+
