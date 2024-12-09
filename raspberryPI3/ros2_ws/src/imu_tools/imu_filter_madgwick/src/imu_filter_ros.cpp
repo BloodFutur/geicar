@@ -234,9 +234,6 @@ void ImuFilterMadgwickRos::imuCallback(ImuMsg::ConstSharedPtr imu_msg_raw)
 
     rclcpp::Time time = imu_msg_raw->header.stamp;
 
-    //************************************************************************************ */
-    //imu_frame_ = imu_msg_raw->header.frame_id;
-
     if (!initialized_ || stateless_)
     {
         geometry_msgs::msg::Quaternion init_q;
@@ -299,9 +296,6 @@ void ImuFilterMadgwickRos::imuMagCallback(ImuMsg::ConstSharedPtr imu_msg_raw,
     const geometry_msgs::msg::Vector3 &mag_fld = mag_msg->magnetic_field;
 
     rclcpp::Time time = imu_msg_raw->header.stamp;
-
-    //***************************************************************************** */
-    //imu_frame_ = imu_msg_raw->header.frame_id;
 
     /*** Compensate for hard iron ***/
     geometry_msgs::msg::Vector3 mag_compensated;
@@ -488,7 +482,7 @@ void ImuFilterMadgwickRos::publishFilteredMsg(
         tf2::Matrix3x3(tf2::Quaternion(q1, q2, q3, q0))
             .getRPY(rpy.vector.x, rpy.vector.y, rpy.vector.z);
 
-        rpy.header = imu_msg_raw->header;  //A PEUT-ÊTRE CHANGER
+        rpy.header = imu_msg_raw->header;  
         rpy_filtered_debug_publisher_->publish(rpy);
     }
 }
