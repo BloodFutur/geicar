@@ -11,7 +11,7 @@ public:
             std::bind(&ImuFrameIdModifier::imu_callback, this, std::placeholders::_1));
 
         // Publisher for the modified topic (/imu/modified_data)
-        publisher_ = this->create_publisher<sensor_msgs::msg::Imu>("/imu/modified_data", 10);
+        publisher_ = this->create_publisher<sensor_msgs::msg::Imu>("/imu/modified_frame_id", 10);
     }
 
 private:
