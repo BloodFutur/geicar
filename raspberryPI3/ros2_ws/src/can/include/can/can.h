@@ -33,5 +33,6 @@
 
 #define WHEEL_BASE 0.55             //0.55m
 #define WHEEL_RADIUS 0.095          //0.095m
+#define ANGLE_MAX 0.401425728          //23°
 
 #endif /*__ can_H */
