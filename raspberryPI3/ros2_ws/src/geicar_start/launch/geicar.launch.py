@@ -45,6 +45,12 @@ def generate_launch_description():
         parameters=[os.path.join(config_dir, 'imu_filter.yaml')],
         emulate_tty=True
     )
+    
+    imu_frame_id_modifier_node = Node(
+        package="imu_filter_madgwick",
+        executable="imu_frame_id_modifier_node",
+        emulate_tty=True
+    )
 
     system_check_node = Node(
         package="system_check",
@@ -70,6 +76,7 @@ def generate_launch_description():
     ld.add_action(can_tx_node)
     ld.add_action(car_control_node)
     ld.add_action(imu_filter_madgwick_node)
+    ld.add_action(imu_frame_id_modifier_node)
     ld.add_action(system_check_node)
     ld.add_action(rosbridge_server_node)
     ld.add_action(obstacles_detection_node)

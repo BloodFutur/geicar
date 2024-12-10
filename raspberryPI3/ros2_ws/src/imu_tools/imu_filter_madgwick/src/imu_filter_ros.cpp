@@ -59,6 +59,9 @@ ImuFilterMadgwickRos::ImuFilterMadgwickRos(const rclcpp::NodeOptions &options)
     declare_parameter("publish_debug_topics", false);
     get_parameter("publish_debug_topics", publish_debug_topics_);
 
+    declare_parameter("imu_frame", "base_link");
+    get_parameter("imu_frame", imu_frame_);
+
     double yaw_offset = 0.0;
     declare_parameter("yaw_offset", 0.0);
     get_parameter("yaw_offset", yaw_offset);
@@ -230,7 +233,6 @@ void ImuFilterMadgwickRos::imuCallback(ImuMsg::ConstSharedPtr imu_msg_raw)
     rclcpp::Clock steady_clock(RCL_STEADY_TIME);  // for throttle logger message
 
     rclcpp::Time time = imu_msg_raw->header.stamp;
-    imu_frame_ = imu_msg_raw->header.frame_id;
 
     if (!initialized_ || stateless_)
     {
@@ -294,7 +296,6 @@ void ImuFilterMadgwickRos::imuMagCallback(ImuMsg::ConstSharedPtr imu_msg_raw,
     const geometry_msgs::msg::Vector3 &mag_fld = mag_msg->magnetic_field;
 
     rclcpp::Time time = imu_msg_raw->header.stamp;
-    imu_frame_ = imu_msg_raw->header.frame_id;
 
     /*** Compensate for hard iron ***/
     geometry_msgs::msg::Vector3 mag_compensated;
@@ -462,6 +463,8 @@ void ImuFilterMadgwickRos::publishFilteredMsg(
     imu_msg.orientation_covariance[7] = 0.0;
     imu_msg.orientation_covariance[8] = orientation_variance_;
 
+    imu_msg.header.frame_id= imu_frame_;
+
     if (remove_gravity_vector_)
     {
         float gx, gy, gz;
@@ -479,7 +482,7 @@ void ImuFilterMadgwickRos::publishFilteredMsg(
         tf2::Matrix3x3(tf2::Quaternion(q1, q2, q3, q0))
             .getRPY(rpy.vector.x, rpy.vector.y, rpy.vector.z);
 
-        rpy.header = imu_msg_raw->header;
+        rpy.header = imu_msg_raw->header;  
         rpy_filtered_debug_publisher_->publish(rpy);
     }
 }
