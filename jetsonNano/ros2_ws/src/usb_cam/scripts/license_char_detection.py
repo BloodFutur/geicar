@@ -40,6 +40,30 @@ class CharDetection(Node):
             '/plate_detection',  # Topic for the annoted images
             10
         )
+        
+    def validate_plate_format(self, plate_text):
+        """
+        Validates and adjusts the plate format to 'XX-XXX-XX' if necessary.
+        """
+        plate_text = plate_text.replace(" ", "")  # Remove spaces
+
+        # Check if it matches the desired format 'XX-XXX-XX'
+        if re.match(r'^[A-Z0-9]{2}-[A-Z0-9]{3}-[A-Z0-9]{2}$', plate_text):
+            return plate_text  # Plate is already valid
+
+        # If the detected plate contains excessive characters or incorrect format
+        plate_parts = plate_text.split('-')
+        if len(plate_parts) == 3:  # Plaque déjà segmentée
+            if len(plate_parts[0]) > 2:
+                plate_parts[0] = plate_parts[0][-2:]  # Prendre les deux derniers caractères
+            if len(plate_parts[1]) > 3:
+                plate_parts[1] = plate_parts[1][:3]  # Garder les trois premiers caractères
+            if len(plate_parts[2]) > 2:
+                plate_parts[2] = plate_parts[2][:2]  # Garder les deux premiers caractères
+            return '-'.join(plate_parts)
+
+        # If no valid format is possible, return an empty string
+        return ""
 
     def image_callback(self, msg):
         try:
@@ -68,16 +92,23 @@ class CharDetection(Node):
                 try:
                     # Preprocessing for OCR
                     gray_plate = cv2.cvtColor(plate_roi, cv2.COLOR_BGR2GRAY)
+                    gray_plate = cv2.equalizeHist(gray_plate)
                     _, threshold_plate = cv2.threshold(gray_plate, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
                     # Use Tesseract OCR
-                    plate_text = pytesseract.image_to_string(threshold_plate, config='--psm 8').strip()
+                    config = '-c tessedit_char_whitelist=ABCDEFGHJKLMNPQRSTVWXYZ0123456789 --psm 3'
+                    plate_text = pytesseract.image_to_string(threshold_plate, config=config).strip()
+                    #plate_text = pytesseract.image_to_string(threshold_plate, config='--psm 8').strip()
 
+                    plate_text = self.validate_plate_format(plate_text)
+                    
                     if plate_text:
                         # Annoting the image with the text that has been detected
                         cv2.putText(annotated_image, plate_text, (x1, y2 + 20),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
                         logger.info(f"Detected Plate Text: {plate_text}")
+                    else:
+                        logger.warning("Invalid plate format detected. Skipping annotation.")
 
                 except Exception as e:
                     # Log of errors without stoping the program
