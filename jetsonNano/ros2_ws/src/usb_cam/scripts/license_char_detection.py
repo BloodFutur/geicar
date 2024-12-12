@@ -9,6 +9,7 @@ from cv_bridge import CvBridge
 from ultralytics import YOLO  # To use YOLOv8
 import pytesseract # add to the READ_ME file
 import logging
+import re
 
 # Configuration du module logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -53,16 +54,19 @@ class CharDetection(Node):
 
         # If the detected plate contains excessive characters or incorrect format
         plate_parts = plate_text.split('-')
-        if len(plate_parts) == 3:  # Plaque déjà segmentée
+        if len(plate_parts) == 3:  # plate already segmented
             if len(plate_parts[0]) > 2:
-                plate_parts[0] = plate_parts[0][-2:]  # Prendre les deux derniers caractères
+                plate_parts[0] = plate_parts[0][-2:]  # Take the 2 last characters
             if len(plate_parts[1]) > 3:
-                plate_parts[1] = plate_parts[1][:3]  # Garder les trois premiers caractères
+                plate_parts[1] = plate_parts[1][:3]  # Keep the 3 first characters
             if len(plate_parts[2]) > 2:
-                plate_parts[2] = plate_parts[2][:2]  # Garder les deux premiers caractères
-            return '-'.join(plate_parts)
+                plate_parts[2] = plate_parts[2][:2]  # Keep the 2 first characters
+                formatted_plate = '-'.join(plate_parts)
+                logger.info(f"Formatted Plate: '{formatted_plate}'")
+            return formatted_plate
 
         # If no valid format is possible, return an empty string
+        logger.info(f"Problematic Plate: '{plate_text}'")
         return ""
 
     def image_callback(self, msg):
@@ -96,7 +100,7 @@ class CharDetection(Node):
                     _, threshold_plate = cv2.threshold(gray_plate, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
                     # Use Tesseract OCR
-                    config = '-c tessedit_char_whitelist=ABCDEFGHJKLMNPQRSTVWXYZ0123456789 --psm 3'
+                    config = '-c tessedit_char_whitelist=ABCDEFGHJKLMNPQRSTVWXYZ0123456789- --psm 3'
                     plate_text = pytesseract.image_to_string(threshold_plate, config=config).strip()
                     #plate_text = pytesseract.image_to_string(threshold_plate, config='--psm 8').strip()
 
