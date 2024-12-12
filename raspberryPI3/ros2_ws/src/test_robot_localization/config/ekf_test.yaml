@@ -2,73 +2,34 @@
 
 ekf_filter_node_odom:
   ros__parameters:
-
-    # Frequency of the filter in Hz
+    # Frequency of the EKF updates
     frequency: 30.0
-
-    # EKF prediction model
     two_d_mode: true
 
-    
-    # Transform configuration
-    map_frame: map              # Fixed frame of reference
-    odom_frame: odom            # Odometry frame
-    base_link_frame: base_link  # Robot frame
-    world_frame: odom           # World frame (usually odom for localization)
+    # Specify the sensor data sources (topics)
+    odom0: "/odom/encoder"
+    imu0: "/imu/modified_frame_id"
 
-    # Initial state (x, y, yaw) set to 0 by default
-    initial_state: [0.0, 0.0, 0.0,  # x, y, z position
-                    0.0, 0.0, 0.0,  # roll, pitch, yaw orientation
-                    0.0, 0.0, 0.0,  # x, y, z linear velocity
-                    0.0, 0.0, 0.0,  # roll, pitch, yaw angular velocity
-                    0.0, 0.0, 0.0]  # x, y, z linear acceleration
-
-
-    # IMU topic name
-    imu0: imu/modified_frame_id
-
-    # IMU data to fuse (roll, pitch, yaw, and yaw velocity)
-    imu0_config: [false, false, false,  # x, y, z position
-                  false, false, true,   # roll, pitch, yaw orientation
-                  false, false, false,  # x, y, z linear velocity
-                  false, false, true,   # roll, pitch, yaw angular velocity
-                  true, false, false]  # linear acceleration
-
-    # IMU data differential or absolute
-    imu0_differential: false
-
-    # IMU orientation as quaternion (if true)
-    imu0_relative: true
-
-    # Encoder odometry topic name
-    odom0: odom/encoder
-
-    # Odometry data to fuse (x, y position, and linear velocity)
-    odom0_config: [true, true, false,   # x, y, z position
-                   false, false, true,  # roll, pitch, yaw orientation
-                   true, true, false,   # x, y, z linear velocity
-                   false, false, true,  # roll, pitch, yaw angular velocity
-                   false, false, false] # linear acceleration
-
-    # Odometry data differential or absolute
-    odom0_differential: false
-
-    # Process noise covariance (tuned for typical 2D robot behavior)
-    process_noise_covariance: [0.05, 0.0, 0.0, 0.0, 0.0, 0.0,
-                               0.0, 0.05, 0.0, 0.0, 0.0, 0.0,
-                               0.0, 0.0, 0.01, 0.0, 0.0, 0.0,
-                               0.0, 0.0, 0.0, 0.1, 0.0, 0.0,
-                               0.0, 0.0, 0.0, 0.0, 0.1, 0.0,
-                               0.0, 0.0, 0.0, 0.0, 0.0, 0.01]
-
-    # Sensor timeout (seconds)
+    # Delay in sensor data processing
     sensor_timeout: 0.1
 
-    # Whether to publish the acceleration state
-    publish_acceleration: false
+    imu0_config: [false, false, false,
+                false, false, true,
+                false, false, false,
+                false, false, true,
+                true, false, false]
 
-    # Whether to reset the filter when the sensor data is not received
-    reset_on_time_jump: true
+    odom0_config: [true, true, false,
+                false, false, true,
+                true, false, false,
+                false, false, true,
+                false, false, false]
+
+    # Frame IDs
+    map_frame: "map"
+    odom_frame: "odom"
+    base_link_frame: "base_link"
+    world_frame : "odom"
 
 
 ekf_filter_node_map:
