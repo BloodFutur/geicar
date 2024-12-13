@@ -5,10 +5,10 @@ from rclpy.serialization import deserialize_message
 import csv
 
 # Path to your ROS 2 bag file
-bag_file_path = "../rosbag_data/odometry_GPS_IMU.db3"
+bag_file_path = "../rosbag_data/traj_courbe_kalman.db3"
 
 # Path to save the CSV file
-csv_file_path = "../rosbag_data/filtered_odometry_positions_IMU.csv"
+csv_file_path = "../rosbag_data/traj_courbe_kalman.csv"
 
 # Initialize the ROS 2 context
 rclpy.init()
@@ -22,7 +22,7 @@ converter_options = rosbag2_py.ConverterOptions(
 bag_reader.open(storage_options, converter_options)
 
 # Define the topic to extract
-odometry_topic = "/odometry/filtered"  # Adjust to match your topic name
+odometry_topic = "/odometry/local"  # Adjust to match your topic name
 
 # Open the CSV file for writing
 with open(csv_file_path, mode="w", newline="") as csvfile:
