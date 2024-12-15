@@ -39,7 +39,6 @@
 #include "imu_filter_madgwick/base_node.hpp"
 #include "imu_filter_madgwick/visibility_control.h"
 
-#define FRAME_ID "map"
 class ImuFilterMadgwickRos : public imu_filter::BaseNode
 {
     typedef sensor_msgs::msg::Imu ImuMsg;

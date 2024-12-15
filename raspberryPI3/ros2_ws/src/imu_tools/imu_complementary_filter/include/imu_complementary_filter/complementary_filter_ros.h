@@ -49,7 +49,6 @@
 
 #include "imu_complementary_filter/complementary_filter.h"
 
-#define FRAME_ID "map"
 namespace imu_tools {
 
 class ComplementaryFilterROS : public rclcpp::Node

@@ -232,7 +232,6 @@ void ComplementaryFilterROS::publish(ImuMsg::ConstSharedPtr imu_msg_raw)
 
     // Create and publish fitlered IMU message.
     ImuMsg::SharedPtr imu_msg = std::make_shared<ImuMsg>(*imu_msg_raw);
-    imu_msg->header.frame_id = FRAME_ID;
 
     imu_msg->orientation.x = q1;
     imu_msg->orientation.y = q2;
