@@ -92,7 +92,14 @@ def generate_launch_description():
                     ('gps/filtered', 'gps/filtered'),
                     ('odometry/gps', 'odometry/gps')]           
     )   
+    
+    mqtt_client_node = Node(
+        package="mqtt_client",
+        executable="mqtt_client_node",
+        emulate_tty=True
+    )
 
+    ld.add_action(mqtt_client_node)
     ld.add_action(joystick_node)
     ld.add_action(joystick_to_cmd_node)
     ld.add_action(can_rx_node)
