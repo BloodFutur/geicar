@@ -6,7 +6,7 @@ import json
 import paho.mqtt.client as mqtt
 
 # MQTT Settings
-BROKER_ADDRESS = "147.79.101.94"
+BROKER_ADDRESS = "srv665994.hstgr.cloud"
 MQTT_PORT = 1883
 MQTT_USERNAME = "geicar"
 MQTT_PASSWORD = "geicar"

@@ -13,7 +13,7 @@ function App() {
 
   useEffect(() => {
     // Set up the MQTT client connection
-    const mqtt_client = mqtt.connect('ws://147.79.101.94:9001', {
+    const mqtt_client = mqtt.connect('ws://srv665994.hstgr.cloud:9001', {
       clientId: 'react-client', // Unique client ID
       username: 'geicar',
       password: 'geicar'
