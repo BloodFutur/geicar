@@ -14,12 +14,16 @@
 #include "sensor_msgs/msg/magnetic_field.hpp"
 #include "sensor_msgs/msg/nav_sat_fix.hpp"
 #include "sensor_msgs/msg/nav_sat_status.hpp"
+#include "nav_msgs/msg/odometry.hpp"
 #include "interfaces/msg/motors_feedback.hpp"
 #include "interfaces/msg/general_data.hpp"
 #include "interfaces/msg/steering_calibration.hpp"
 #include "interfaces/msg/ultrasonic.hpp"
 #include "interfaces/msg/gnss.hpp"
 #include "interfaces/msg/system_check.hpp"
+
+#include <tf2/LinearMath/Quaternion.h>
+#include <cmath>
 
 #include "../include/can/can.h"
 
@@ -37,11 +41,13 @@ public:
         publisher_gnss_ = this->create_publisher<interfaces::msg::Gnss>("gnss_data", 10);
         publisher_navsatfix_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("/gps/fix", 10);
         publisher_motorsFeedback_ = this->create_publisher<interfaces::msg::MotorsFeedback>("motors_feedback", 10);
+        publisher_odometryEncoder_ = this->create_publisher<nav_msgs::msg::Odometry>("odom/encoder", 10);
         publisher_generalData_ = this->create_publisher<interfaces::msg::GeneralData>("general_data", 10);
         publisher_steeringCalibration_ = this->create_publisher<interfaces::msg::SteeringCalibration>("steering_calibration", 10);
         publisher_systemCheck_ = this->create_publisher<interfaces::msg::SystemCheck>("system_check", 10);
-
+        
         this->declare_parameter("gps_shift_fix",true);
+        this->resetOdometry();
 
         if (initCommunication()==0){
             readData(); 
@@ -113,17 +119,61 @@ private:
                 float leftSpeedMes = (frame.data[2] << 8) + frame.data[3];
                 float rightSpeedMes = (frame.data[4] << 8) + frame.data[5];
 
-                motorsFeedbackMsg.left_rear_speed = 0.01 * leftSpeedMes ; 
-                motorsFeedbackMsg.right_rear_speed = 0.01 * rightSpeedMes ; 
+                motorsFeedbackMsg.left_rear_speed = 0.01 * leftSpeedMes ;   //In RPM  
+                motorsFeedbackMsg.right_rear_speed = 0.01 * rightSpeedMes ; //In RPM
 
                 //Update Steering Angle
-                int steer = frame.data[6];  //Receive steer in [0;200]
+                int steer = frame.data[6];                                //Receive steer in [0;200]
                 motorsFeedbackMsg.steering_angle = (steer - 100.0)/100.0; //Convert steer in [-1;1]
 
 
                 //Publication on topics
                 RCLCPP_DEBUG(this->get_logger(), "Publishing to motors_feedback and general_data topics");
                 publisher_motorsFeedback_->publish(motorsFeedbackMsg);
+
+                //Convert to Odometry
+                // Time step (dt) in seconds
+                rclcpp::Time current_time = this->now();
+                double dt = (current_time - last_time).seconds();
+                last_time = current_time;
+
+                // Compute linear velocity (assuming average encoder data)
+                double v_left = motorsFeedbackMsg.left_rear_speed*(2 * M_PI *WHEEL_RADIUS)/60.0;    // Convert to m/s
+                double v_right = motorsFeedbackMsg.right_rear_speed*(2 * M_PI *WHEEL_RADIUS)/60.0;  // Convert to m/s
+                double v = (v_left + v_right) / 2.0;
+
+                // Compute angular velocity using the steering angle
+                double omega = v * std::tan(motorsFeedbackMsg.steering_angle*ANGLE_MAX) / WHEEL_BASE;
+
+                // Update pose using kinematic model
+                odom_x += v * std::cos(odom_theta) * dt;
+                odom_y += v * std::sin(odom_theta) * dt;
+                odom_theta += omega * dt;
+
+                // Create the odometry message
+                auto odom_msg = nav_msgs::msg::Odometry();
+                odom_msg.header.stamp = this->get_clock()->now();
+                odom_msg.header.frame_id = "odom";
+                odom_msg.child_frame_id = "base_link";
+
+                // Set position
+                odom_msg.pose.pose.position.x = odom_x;
+                odom_msg.pose.pose.position.y = odom_y;
+                odom_msg.pose.pose.position.z = 0.0;
+
+                // Set orientation (convert theta to quaternion)
+                tf2::Quaternion q;
+                q.setRPY(0, 0, odom_theta);
+                odom_msg.pose.pose.orientation.x = q.x();
+                odom_msg.pose.pose.orientation.y = q.y();
+                odom_msg.pose.pose.orientation.z = q.z();
+                odom_msg.pose.pose.orientation.w = q.w();
+
+                // Set linear and angular velocities
+                odom_msg.twist.twist.linear.x = v;
+                odom_msg.twist.twist.angular.z = omega;
+                publisher_odometryEncoder_->publish(odom_msg);
+
 
 
             } else if (frame.can_id == ID_CALIBRATION_MODE){
@@ -287,7 +337,7 @@ private:
                 imu_mag_msg.magnetic_field.z = mag_z * pow(10,-7);
 
                 imu_mag_msg.header.stamp = rclcpp::Clock().now();
-
+                imu_mag_msg.header.frame_id = "base_link";
                 publisher_imu_mag_->publish(imu_mag_msg); 
 
             /* Update Angular Velocity
@@ -345,6 +395,7 @@ private:
                 imu_raw_msg.angular_velocity.z = ang_vel_z * pow(1.7453,-5);    //Conversion to [rad/s]
 
                 imu_raw_msg.header.stamp = rclcpp::Clock().now();
+                
                 publisher_imu_raw_->publish(imu_raw_msg);
 
 
@@ -401,6 +452,13 @@ private:
         return 0;
     }
 
+    void resetOdometry(){
+        odom_x = 0.0;
+        odom_y = 0.0;
+        odom_theta = 0.0;
+        last_time = this->now();
+    }
+
     //CAN variables
     int s, i; 
     int nbytes;
@@ -424,6 +482,10 @@ private:
     int ang_vel_y;
     int ang_vel_z;
 
+    //Odometry variables
+    double odom_x, odom_y, odom_theta;
+    rclcpp::Time last_time;
+
     //General data
     float batteryLevel; //[V]
     float temperature; //[°C]
@@ -437,6 +499,7 @@ private:
     rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr publisher_navsatfix_;
 
     rclcpp::Publisher<interfaces::msg::MotorsFeedback>::SharedPtr publisher_motorsFeedback_;
+    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr publisher_odometryEncoder_;
     rclcpp::Publisher<interfaces::msg::GeneralData>::SharedPtr publisher_generalData_;
     rclcpp::Publisher<interfaces::msg::SteeringCalibration>::SharedPtr publisher_steeringCalibration_;
 
