@@ -61,8 +61,8 @@ class CharDetection(Node):
                 plate_parts[1] = plate_parts[1][:3]  # Keep the 3 first characters
             if len(plate_parts[2]) > 2:
                 plate_parts[2] = plate_parts[2][:2]  # Keep the 2 first characters
-                formatted_plate = '-'.join(plate_parts)
-                logger.info(f"Formatted Plate: '{formatted_plate}'")
+            formatted_plate = '-'.join(plate_parts)
+            logger.info(f"Formatted Plate: '{formatted_plate}'")
             return formatted_plate
 
         # If no valid format is possible, return an empty string
