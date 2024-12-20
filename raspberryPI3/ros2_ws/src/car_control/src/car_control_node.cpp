@@ -35,8 +35,8 @@ public:
         rightSpeedCmd = 0.0;
         oldIntegratorLeftVal = 0.0;
         oldIntegratorRightVal = 0.0;
-        targetRightSpeed = 30.0;
-        targetLeftSpeed = 30.0;
+        targetRightSpeed = 0.0;
+        targetLeftSpeed = 0.0;
         currentLeftSpeed = 0.0;
         currentRightSpeed = 0.0;
         
@@ -158,6 +158,7 @@ private:
             //Autonomous Mode
             } else if (mode==1){
                 if (!this->obstacle_detected){
+                    setCarSpeed(30.0, 30.0);
                     updateSpeedCmd();
                     
                     RCLCPP_DEBUG(this->get_logger(), "leftSpeedCmd : %f", leftSpeedCmd);
@@ -250,7 +251,18 @@ private:
         oldIntegratorRightVal = 0.0;
         currentLeftSpeed = 0.0;
         currentRightSpeed = 0.0;
+        targetRightSpeed = 0.0;
+        targetLeftSpeed = 0.0;
     }
+
+    /*Set car's speed
+    *
+    * This function set the speed of the car based on the speed command
+    */
+    void setCarSpeed(float LeftSpeed, float RightSpeed){
+        targetLeftSpeed = LeftSpeed;
+        targetRightSpeed = RightSpeed;
+    }    
 
     /* Update speed commands for autonomous mode :
     *  This function is called by updateCmd function in AUTONOMOUS mode
