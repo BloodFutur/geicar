@@ -158,7 +158,6 @@ private:
             //Autonomous Mode
             } else if (mode==1){
                 if (!this->obstacle_detected){
-                    setCarSpeed(30.0, 30.0);
                     updateSpeedCmd();
                     
                     RCLCPP_DEBUG(this->get_logger(), "leftSpeedCmd : %f", leftSpeedCmd);
