@@ -269,7 +269,7 @@ private:
                 auto navsat_msg = sensor_msgs::msg::NavSatFix();
                 bool use_gps_shift_fix = this->get_parameter("gps_shift_fix").as_bool();
                 navsat_msg.header.stamp = this->get_clock()->now();
-                navsat_msg.header.frame_id = "map";
+                navsat_msg.header.frame_id = "base_link";
 
                 navsat_msg.latitude = latitude;
                 navsat_msg.longitude = longitude;
