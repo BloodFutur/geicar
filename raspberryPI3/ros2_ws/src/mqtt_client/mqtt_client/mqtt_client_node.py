@@ -5,6 +5,9 @@ from sensor_msgs.msg import CompressedImage
 import json
 import paho.mqtt.client as mqtt
 
+import base64
+import time
+
 # MQTT Settings
 BROKER_ADDRESS = "srv665994.hstgr.cloud"
 MQTT_PORT = 1883
@@ -43,7 +46,8 @@ def on_disconnect(client, userdata, rc):
         "status": "Disconnected"
     }
     client.publish("vehicle/status", json.dumps(status))
-            
+       
+    
 class Ros2MqttClient(Node):
     def __init__(self):
         super().__init__('ros2_mqtt_client')
@@ -53,7 +57,7 @@ class Ros2MqttClient(Node):
             self.gps_listener_callback,
             10
         )
-        self.sub_gps = self.create_subscription(
+        self.sub_camera = self.create_subscription(
             CompressedImage,
             '/plate_detection/compressed',
             self.plate_detection_listener_cb,
@@ -67,6 +71,9 @@ class Ros2MqttClient(Node):
         
         self.mqtt_client.connect(BROKER_ADDRESS, MQTT_PORT)
         self.mqtt_client.loop_start()
+        
+        self.last_publish_time = 0
+        self.max_fps = 20
        
     def gps_listener_callback(self, msg):
         self.get_logger().info("Publishing gps")
@@ -74,9 +81,19 @@ class Ros2MqttClient(Node):
         self.mqtt_client.publish("gps", json.dumps(json_message))
 
     def plate_detection_listener_cb(self, msg):
+        current_time = time.time()
+        if current_time - self.last_publish_time < 1.0 / self.max_fps:
+            return  # Skip publishing if not enough time has passed
+        
+        self.last_publish_time = current_time
+        
         self.get_logger().info("Publishing image")
         json_message = todict(msg)
-        self.mqtt_client.publish("plate_detection", json.dumps(json_message))
+        transformed_json = json_message.copy()
+        
+        # Convert to base64 so that the web browser knows how to use this data
+        transformed_json["data"] = base64.b64encode(msg.data).decode('utf-8')
+        self.mqtt_client.publish("plate_detection", json.dumps(transformed_json))
 
     def destroy_node(self):
         # Stop MQTT loop before destroying the node
