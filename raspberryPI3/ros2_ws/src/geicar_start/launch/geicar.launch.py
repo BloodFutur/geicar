@@ -95,7 +95,7 @@ def generate_launch_description():
     
     mqtt_client_node = Node(
         package="mqtt_client",
-        executable="mqtt_client_node",
+        executable="mqtt_client",
         emulate_tty=True
     )
 
