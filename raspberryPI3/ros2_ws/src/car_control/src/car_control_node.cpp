@@ -10,6 +10,8 @@
 
 #include "std_srvs/srv/empty.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "interfaces/msg/gnss_status.hpp"
+
 
 
 #include "../include/car_control/steeringCmd.h"
@@ -63,6 +65,11 @@ public:
         
         server_calibration_ = this->create_service<std_srvs::srv::Empty>(
                             "steering_calibration", std::bind(&car_control::steeringCalibration, this, std::placeholders::_1, std::placeholders::_2));
+
+        //Marcyle group Code
+        subscription_gnss_status_ = this->create_subscription<interfaces::msg::GnssStatus>(
+        "gnss_status", 10, std::bind(&car_control::GnssStatusCallback, this, _1));
+        //Marcyle group Code
 
         timer_ = this->create_wall_timer(PERIOD_UPDATE_CMD, std::bind(&car_control::updateCmd, this));
 
@@ -127,6 +134,13 @@ private:
         this->obstacle_detected = detection.data ;
     }
 
+    //Marcyle group Code
+    void GnssStatusCallback(const interfaces::msg::GnssStatus & gnssMsg) {
+        turn_angle = gnssMsg.turn_angle;
+    }
+    //Marcyle group Code
+
+
     /* Update PWM commands : leftRearPwmCmd, rightRearPwmCmd, steeringPwmCmd
     *
     * This function is called periodically by the timer [see PERIOD_UPDATE_CMD in "car_control_node.h"]
@@ -157,7 +171,17 @@ private:
 
             //Autonomous Mode
             } else if (mode==1){
+
                 if (!this->obstacle_detected){
+                    
+                    if (abs(turn_angle) > 10){
+                        frontWheelRotation = turn_angle;
+                        setCarSpeed(40,40);
+                    }else {
+                        frontWheelRotation = 0;
+                        setCarSpeed(60,60);
+                    }
+
                     updateSpeedCmd();
                     
                     RCLCPP_DEBUG(this->get_logger(), "leftSpeedCmd : %f", leftSpeedCmd);
@@ -165,6 +189,9 @@ private:
 
                     autonomousPropulsionCmd(rightSpeedCmd, rightRearPwmCmd);
                     autonomousPropulsionCmd(leftSpeedCmd, leftRearPwmCmd);
+
+                    newSteeringCmd(frontWheelRotation,currentAngle,steeringPwmCmd);
+
                 }
                 else{
                     leftRearPwmCmd = STOP;
@@ -320,6 +347,9 @@ private:
     float oldIntegratorRightVal;
     float oldSpeedLeft;
     float oldSpeedRight;
+    float turn_angle;
+    float frontWheelRotation;
+
 
     //Control variables
     uint8_t leftRearPwmCmd;
@@ -338,6 +368,7 @@ private:
     rclcpp::Subscription<interfaces::msg::MotorsFeedback>::SharedPtr subscription_motors_feedback_;
     rclcpp::Subscription<interfaces::msg::SteeringCalibration>::SharedPtr subscription_steering_calibration_;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscription_obstacles_detection_ ;
+    rclcpp::Subscription<interfaces::msg::GnssStatus>::SharedPtr subscription_gnss_status_;
 
     //Timer
     rclcpp::TimerBase::SharedPtr timer_;

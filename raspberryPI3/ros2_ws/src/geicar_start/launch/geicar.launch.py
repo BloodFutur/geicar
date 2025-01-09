@@ -13,7 +13,7 @@ def generate_launch_description():
         emulate_tty=True
     )
 
-    joystick_to_cmd_node = Node( 
+    joystick_to_cmd_node = Node(
         package="joystick",
         executable="joystick_to_cmd",
         emulate_tty=True
@@ -45,7 +45,7 @@ def generate_launch_description():
         parameters=[os.path.join(config_dir, 'imu_filter.yaml')],
         emulate_tty=True
     )
-    
+
     imu_frame_id_modifier_node = Node(
         package="imu_filter_madgwick",
         executable="imu_frame_id_modifier_node",
@@ -73,29 +73,35 @@ def generate_launch_description():
     localization_config_dir = os.path.join(get_package_share_directory('geicar_start'), 'config')
 
     robot_localization_node = Node(
-        package='robot_localization', 
-        executable='ekf_node', 
+        package='robot_localization',
+        executable='ekf_node',
         name='ekf_filter_node_odom',
         output='screen',
         parameters=[os.path.join(localization_config_dir, 'ekf_config.yaml')],
         remappings=[('odometry/filtered', 'odometry/local')]
-    ) 
+    )
 
     navsat_transform_node = Node(
-        package='robot_localization', 
-        executable='navsat_transform_node', 
+        package='robot_localization',
+        executable='navsat_transform_node',
         name='navsat_transform',
         output='screen',
         parameters=[os.path.join(localization_config_dir, 'ekf_config.yaml')],
         remappings=[('imu/data', '/imu/modified_frame_id'),
-                    ('gps/fix', 'gps/fix'), 
+                    ('gps/fix', 'gps/fix'),
                     ('gps/filtered', 'gps/filtered'),
-                    ('odometry/gps', 'odometry/gps')]           
-    )   
-    
+                    ('odometry/gps', 'odometry/gps')]
+    )
+
     mqtt_client_node = Node(
         package="mqtt_client",
         executable="mqtt_client",
+        emulate_tty=True
+    )
+
+    gps_following_node = Node(
+        package="gps_following",
+        executable="gps_following_node",
         emulate_tty=True
     )
 
@@ -112,5 +118,6 @@ def generate_launch_description():
     ld.add_action(obstacles_detection_node)
     ld.add_action(robot_localization_node)
     ld.add_action(navsat_transform_node)
+    ld.add_action(gps_following_node)
 
     return ld

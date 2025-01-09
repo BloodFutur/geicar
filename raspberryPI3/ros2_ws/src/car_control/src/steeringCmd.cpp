@@ -1,5 +1,15 @@
 #include "../include/car_control/steeringCmd.h"
+#define FRONT_WHEEL_MAX_ROTATION 30.0f
+#include <algorithm>
 
+// Marcyle group function
+void newSteeringCmd(float front_wheel_rotation_, float currentFrontWheelRotation_, uint8_t & steeringPwmCmd){
+
+	float diff_front_wheel_rotation = (front_wheel_rotation_ - currentFrontWheelRotation_); 
+
+    steeringPwmCmd = 50 + std::clamp(static_cast<int>(50 * diff_front_wheel_rotation /FRONT_WHEEL_MAX_ROTATION), -50, 50);
+}
+// Marcyle group function
 
 
 //return the Pwm command to reach the angle passed in argument
