@@ -143,7 +143,12 @@ private:
                 double v = (v_left + v_right) / 2.0;
 
                 // Compute angular velocity using the steering angle
-                double omega = v * std::tan(motorsFeedbackMsg.steering_angle*ANGLE_MAX) / WHEEL_BASE;
+                double fixed_steering_angle = motorsFeedbackMsg.steering_angle;
+                if (fixed_steering_angle > -0.1 && fixed_steering_angle < 0.1) {
+                    fixed_steering_angle = 0.0;
+                } 
+                
+                double omega = v * std::tan(fixed_steering_angle*ANGLE_MAX) / WHEEL_BASE;
 
                 // Update pose using kinematic model
                 odom_x += v * std::cos(odom_theta) * dt;
