@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { saveAs } from "file-saver"; // For saving CSV file
+
 import * as L from "leaflet";
+import "leaflet-draw"; // This makes L.Control.Draw available
+import 'leaflet-draw/dist/leaflet.draw.css';
+import { LatLngTuple } from "leaflet";
+//import "leaflet-spline"; // Import leaflet-spline
+
 
 interface NavSatFix {
     latitude: number;
@@ -15,6 +22,69 @@ const Map = ({ mqttSub, payload, status }: { mqttSub: Function; payload: any, st
     const popup = useRef<L.Popup | null>(null);
     const parkingLayerRef = useRef<L.GeoJSON | null>(null);
     const [pathSegments, setPathSegments] = useState<any[]>([]);
+    const [drawnPoints, setDrawnPoints] = useState<L.LatLng[]>([]);
+    const layerSplineRef = useRef<L.Layer | L.Spline | null>(null);
+    const [polylines, setPolylines] = useState([]);
+    const drawnItemsRef = useRef<L.FeatureGroup<any>>(new L.FeatureGroup());
+
+    const handleCreated = (e) => {
+        const { layerType, layer } = e;
+        if (layerType === 'polyline') {
+            const newPolyline = layer.getLatLngs();
+            setDrawnPoints(newPolyline);
+            // updateSpline(newPolyline);
+            const latLngs : LatLngTuple[] = [
+                [5.1, 2.9], // First entry \
+                [6.1, 2.5], //              \
+                [6.2, 2.7], //                -> Must be identical
+                [5.8, 2.4], //              /
+                [5.1, 2.9], // Last entry  /
+              ];
+            //const spline = L.spline(latLngs, { color: 'purple', weight: 3 });
+            //const layer = L.spline(drawnPoints, { color: 'purple', weight: 3 });
+            // layer.addTo(mapRef.current);
+            drawnItemsRef.current.addLayer(layer); // Add the layer to drawnItems
+        }
+    };
+
+    const handleEdited = (e) => {
+        const layers = e.layers;
+        layers.eachLayer((layer) => {
+            if (layer instanceof L.Polyline) {
+                const editedPolyline = layer.getLatLngs();
+                updateSpline(editedPolyline);
+            }
+        });
+    };
+
+    const updateSpline = (points) => {
+        if (mapRef.current) {
+            if (layerSplineRef.current) {
+                mapRef.current.removeLayer(layerSplineRef.current);
+            }
+            console.log(points.length);
+            if (points.length > 1) {
+                if (layerSplineRef.current) {
+                    mapRef.current.removeLayer(layerSplineRef.current);
+                }
+                console.log(points);
+            
+                const spline: L.Spline = spline(points, { color: 'purple', weight: 3 });
+                //const layer = L.spline(drawnPoints, { color: 'purple', weight: 3 });
+                // layer.addTo(mapRef.current);
+
+                // layerSplineRef.current = layer;
+            }
+            console.log(layerSplineRef.current);
+
+            // Map the points to the spline
+            //const newSplineLayer = L.spline(points, { color: 'purple', weight: 3 });
+            
+            //const newSplineLayer = L.spline(points, { color: 'purple', weight: 3 });
+            //newSplineLayer.addTo(mapRef.current);
+            //setSplineLayer(newSplineLayer);
+        }
+    };
 
     const colors = {
         5: 'green',  // RTK Float
@@ -54,6 +124,31 @@ const Map = ({ mqttSub, payload, status }: { mqttSub: Function; payload: any, st
         };
         legend.addTo(map);
 
+        // Initialize Draw Control
+        drawnItemsRef.current = new L.FeatureGroup();
+        map.addLayer(drawnItemsRef.current);
+        var drawControl = new L.Control.Draw({
+            position: 'topleft',
+
+            draw: {
+                rectangle: false,
+                circle: false,
+                circlemarker: false,
+                marker: false,
+                polygon: false,
+                polyline: true, // Allow drawing of polylines only
+            },
+            edit: {
+                featureGroup: drawnItemsRef.current,
+                remove: true, // Enable delete 
+            },
+        });
+        map.addControl(drawControl);
+
+        // Handle polyline creation
+        map.on("draw:created", handleCreated);
+        map.on("draw:edited", handleEdited);
+
         mapRef.current = map;
 
         popup.current = new L.Popup();
@@ -62,6 +157,27 @@ const Map = ({ mqttSub, payload, status }: { mqttSub: Function; payload: any, st
             style: () => ({ color: "blue" }),
             pointToLayer: (_, latlng) => L.marker(latlng, { icon: L.icon({ iconUrl: "parking-icon.png", iconSize: [20, 20] }) }),
         }).addTo(map);
+
+        drawnItemsRef.current.addTo(map); // Add drawnItems to the map
+
+        // Add click listener to draw spline
+        // map.on('click', (e: L.LeafletMouseEvent) => {
+        //     console.log("click");
+        //     setDrawnPoints((prevPoints) => {
+        //         const newPoints = [...prevPoints, e.latlng];
+        //         if (newPoints.length > 1) {
+        //             if (layerSplineRef.current) {
+        //                 map.removeLayer(layerSplineRef.current);
+        //             }
+        //             console.log(newPoints);
+        //             const layer = L.spline(newPoints, { color: 'purple', weight: 3 });
+        //             layer.addTo(map);
+
+        //             layerSplineRef.current = layer;
+        //         }
+        //         return newPoints;
+        //     });
+        // });
 
         return () => {
             map.remove();
@@ -206,10 +322,28 @@ const Map = ({ mqttSub, payload, status }: { mqttSub: Function; payload: any, st
         fetchParkingData();
     }, []);
 
+    const exportToCSV = () => {
+        const csvContent = "latitude,longitude\n" + drawnPoints.map(point => `${point.lat},${point.lng}`).join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        saveAs(blob, "trajectory.csv");
+    };
+
+    // const resetSplines = () => {
+    //     // Reset to the initial layer or clear the layers
+    //     setDrawnPoints((prevPoints) => {
+    //         return [];
+    //     });
+    //     if (layerSplineRef.current) {
+    //         mapRef.current?.removeLayer(layerSplineRef.current);
+    //         layerSplineRef.current = null;
+    //     }
+    // };
     return (
         <section id="map-section" aria-label="Map Display">
             <label htmlFor="csvFileInput">Upload CSV file:</label>
             <input type="file" id="csvFileInput" accept=".csv" onChange={handleFileInput} multiple />
+            <button onClick={exportToCSV}>Save Trajectory as CSV</button>
+            {/* <button onClick={resetSplines}>Reset Splines</button> */}
             <div id="map"></div>
             <section id="gps-messages" aria-label="GPS Messages">
                 <h3>Received GPS Coordinates: {gpsMessages.length}</h3>
