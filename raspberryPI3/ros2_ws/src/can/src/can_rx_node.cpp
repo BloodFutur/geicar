@@ -400,6 +400,10 @@ private:
                 imu_raw_msg.angular_velocity.z = ang_vel_z * pow(1.7453,-5);    //Conversion to [rad/s]
 
                 imu_raw_msg.header.stamp = rclcpp::Clock().now();
+
+                imu_raw_msg.orientation_covariance={1e-3, 0, 0, 0, 1e-3, 0, 0, 0, 1e-3};
+                imu_raw_msg.linear_acceleration_covariance={1e-4, 0, 0, 0, 1e-4, 0, 0, 0, 1e-4};
+                imu_raw_msg.angular_velocity_covariance={1e-2, 0, 0, 0, 1e-2, 0, 0, 0, 1e-2};
                 
                 publisher_imu_raw_->publish(imu_raw_msg);
 
