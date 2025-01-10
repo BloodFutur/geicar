@@ -17,11 +17,13 @@ class PlateDetection(Node):
         self.bridge = CvBridge()
 
         # Load the YOLOv8 model for the plate detection
+        #self.model = YOLO("/home/pi/geicar/PlaqueDetection/runs/detect/train7/weights/best.pt")  # Put the path of the AI model
         self.model = YOLO("/root/geicar/PlaqueDetection/runs/detect/train7/weights/best.pt")  # Put the path of the AI model
         self.get_logger().info("YOLOv8 first model loaded successfully!")
         
         # Load the YOLOv8 model for the plate detection
         self.model2 = YOLO("/root/geicar/CharacterDetection/runs/detect/train3/weights/best.pt")  # Put the path of the AI model
+        #self.model2 = YOLO("/home/pi/geicar/CharacterDetection/runs/detect/train3/weights/best.pt")  # Put the path of the AI model
         self.get_logger().info("YOLOv8 second model loaded successfully!")
 
         # Subscribe to the camera topic
