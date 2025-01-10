@@ -34,10 +34,23 @@ def generate_launch_description():
     )
     
     # Plate detection node
-    plate_detection_node = Node(
-        package='usb_cam',  # name of the package where you can find the .py script of the plate detection
-        executable='plate_detection.py',  # Name of the Python file
-        name='plate_detection',  # Name of the ROS node
+    #plate_detection_node = Node(
+    #    package='usb_cam',  # name of the package where you can find the .py script of the plate detection
+    #    executable='plate_detection.py',  # Name of the Python file
+    #    name='plate_detection',  # Name of the ROS node
+    #    output='screen',
+    #    parameters=[{
+    #        'camera_topic': '/image_raw',  # If needed you can change the name of the camera topic
+    #        'detection_threshold': 0.5,  
+    #    }],
+    #    emulate_tty=True
+    #)
+
+    # Character detection node
+    char_detection_node = Node(
+        package='usb_cam',  # name of the package where you can find the .py script of the char detection
+        executable='character_detection.py',  # Name of the Python file
+        name='character_detection',  # Name of the ROS node
         output='screen',
         parameters=[{
             'camera_topic': '/image_raw',  # If needed you can change the name of the camera topic
@@ -47,9 +60,10 @@ def generate_launch_description():
     )
 
 
-    ld.add_action(lidar_node)
-    ld.add_action(camera_node)
-    ld.add_action(system_check_ack_node)
-    ld.add_action(plate_detection_node)
+    #ld.add_action(lidar_node)
+    #ld.add_action(camera_node)
+    #ld.add_action(system_check_ack_node)
+    #ld.add_action(plate_detection_node)
+    ld.add_action(char_detection_node)
 
     return ld

@@ -21,8 +21,8 @@ class PlateDetection(Node):
         self.get_logger().info("YOLOv8 first model loaded successfully!")
         
         # Load the YOLOv8 model for the plate detection
-        self.model = YOLO("/root/geicar/CharacterDetection/runs/detect/train3/weights/best.pt")  # Put the path of the AI model
-        self.get_logger().info("YOLOv8 model loaded successfully!")
+        self.model2 = YOLO("/root/geicar/CharacterDetection/runs/detect/train3/weights/best.pt")  # Put the path of the AI model
+        self.get_logger().info("YOLOv8 second model loaded successfully!")
 
         # Subscribe to the camera topic
         self.sub = self.create_subscription(
@@ -74,11 +74,36 @@ class PlateDetection(Node):
                 class_id = box.cls[0]  # Detected Class
                 label = f"{self.model.names[int(class_id)]}: {confidence:.2f}"
 
+                # Add margin around the detected plate (5% of box size)
+                margin_x = int(0.05 * (x2 - x1))
+                margin_y = int(0.05 * (y2 - y1))
+                x1 = max(0, x1 - margin_x)
+                y1 = max(0, y1 - margin_y)
+                x2 = min(frame.shape[1], x2 + margin_x)
+                y2 = min(frame.shape[0], y2 + margin_y)
+                
                 # Draw the bow and label of the annoted image
                 cv2.rectangle(annotated_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 cv2.putText(annotated_image, label, (x1, y1 - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
+                # Extract plate region
+                plate_roi = frame[y1:y2, x1:x2]
+
+                # Character detection on the extracted plate
+                char_results = self.model2(plate_roi)
+
+                for char_result in char_results:
+                    for char_box in char_result.boxes:
+                        cx1, cy1, cx2, cy2 = map(int, char_box.xyxy[0])
+                        char_conf = char_box.conf[0]
+                        char_id = char_box.cls[0]
+                        char_label = f"{self.model2.names[int(char_id)]}: {char_conf:.2f}"
+
+                        # Draw character bounding box (adjusted to the original image coordinates)
+                        cv2.rectangle(annotated_image, (x1 + cx1, y1 + cy1), (x1 + cx2, y1 + cy2), (255, 0, 0), 1)
+                        cv2.putText(annotated_image, char_label, (x1 + cx1, y1 + cy1 - 5),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0), 1)
         # Show annoted image on OpenCV
         #cv2.imshow("Plate Detection", annotated_image)
         #cv2.waitKey(5)
