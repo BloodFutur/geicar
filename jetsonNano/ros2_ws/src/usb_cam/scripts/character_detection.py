@@ -35,25 +35,31 @@ class PlateDetection(Node):
         )
 
         # Creation of a publisher to publish plate detection of images
-        self.pub = self.create_publisher(
+        self.pub_plate = self.create_publisher(
             Image,
             '/plate_detection',  # Topic for the annoted images
             10
         )
         
-        self.pub_compressed = self.create_publisher(
+        self.pub_plate_compressed = self.create_publisher(
             CompressedImage,
             '/plate_detection/compressed',
             10
         )
         
         # Creation of a publisher to publish plate detection of images
-        self.pub = self.create_publisher(
+        self.pub_char = self.create_publisher(
             Image,
-            '/plate_detection',  # Topic for the annoted images
+            '/character_detection',  # Topic for the annoted images
             10
         )
 
+        self.pub_char_compressed = self.create_publisher(
+            CompressedImage,
+            '/character_detection/compressed',
+            10
+        )
+        
     def image_callback(self, msg):
         try:
             # Convertion of the ROS message as an OpenCV image
@@ -94,28 +100,40 @@ class PlateDetection(Node):
 
                 # Character detection on the extracted plate
                 char_results = self.model2(plate_roi)
-
+                characters = []    
+                
                 for char_result in char_results:
                     for char_box in char_result.boxes:
                         cx1, cy1, cx2, cy2 = map(int, char_box.xyxy[0])
                         char_conf = char_box.conf[0]
                         char_id = char_box.cls[0]
                         char_label = f"{self.model2.names[int(char_id)]}: {char_conf:.2f}"
-
+                        characters.append((cx1, char_label))
+                        
                         # Draw character bounding box (adjusted to the original image coordinates)
-                        cv2.rectangle(annotated_image, (x1 + cx1, y1 + cy1), (x1 + cx2, y1 + cy2), (255, 0, 0), 1)
-                        cv2.putText(annotated_image, char_label, (x1 + cx1, y1 + cy1 - 5),
+                        cv2.rectangle(plate_roi, (x1 + cx1, y1 + cy1), (x1 + cx2, y1 + cy2), (255, 0, 0), 1)
+                        cv2.putText(plate_roi, char_label, (x1 + cx1, y1 + cy1 - 5),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0), 1)
-        # Show annoted image on OpenCV
-        #cv2.imshow("Plate Detection", annotated_image)
-        #cv2.waitKey(5)
+                characters.sort(key=lambda x: x[0])
+                plate_text = ''.join([char[1] for char in characters])
+                self.get_logger().info(f"Detected Plate: {plate_text}")
+                
+                try:
+                    #Publish the cropped and annotated plate image
+                    annotated_msg_characters = self.bridge.cv2_to_imgmsg(plate_roi, encoding="bgr8")
+                    annotated_msg_compressed_characters = self.bridge.cv2_to_compressed_imgmsg(plate_roi, dst_format='jpg')
+                    self.pub_char.publish(annotated_msg_characters)
+                    self.pub_char_compressed.publish(annotated_msg_compressed_characters)
+                    self.get_logger().info("Published annotated image on /character_detection")
+                except Exception as e:
+                    self.get_logger().error(f"Failed to publish character detection image: {e}")
 
         # Publish annoted image in a ROS topic
         try:
             annotated_msg = self.bridge.cv2_to_imgmsg(annotated_image, encoding="bgr8")
             annotated_msg_compressed = self.bridge.cv2_to_compressed_imgmsg(annotated_image, dst_format='jpg')
-            self.pub.publish(annotated_msg)
-            self.pub_compressed.publish(annotated_msg_compressed)
+            self.pub_plate.publish(annotated_msg)
+            self.pub_plate_compressed.publish(annotated_msg_compressed)
             self.get_logger().info("Published annotated image on /plate_detection")
         except Exception as e:
             self.get_logger().error(f"Failed to publish image: {e}")
