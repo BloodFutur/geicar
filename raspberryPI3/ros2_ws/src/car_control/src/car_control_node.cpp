@@ -176,10 +176,10 @@ private:
                     
                     if (abs(turn_angle) > 10){
                         frontWheelRotation = turn_angle;
-                        setCarSpeed(40,40);
+                        setCarSpeed(5,5);
                     }else {
                         frontWheelRotation = 0;
-                        setCarSpeed(60,60);
+                        setCarSpeed(10,10);
                     }
 
                     updateSpeedCmd();

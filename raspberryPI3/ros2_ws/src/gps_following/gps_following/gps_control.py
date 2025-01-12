@@ -23,10 +23,8 @@ class GnssListener(Node):
         self.publisher = self.create_publisher(GnssStatus, '/gnss_status', 10)
 
         # Load the GPS points from the itinerary CSV file
-        # We need to record a trajectory first
         self.itinerary = self.load_itinerary_from_csv('gnss_data.csv')
 
-        self.previous_points = []
         if not self.itinerary:
             self.get_logger().error("No valid GPS points loaded from the itinerary!")
             rclpy.shutdown()
@@ -61,8 +59,13 @@ class GnssListener(Node):
 
     def listener_callback(self, msg):
         # Retrieve the current vehicle coordinates and apply the offset
-        current_lat = msg.latitude + self.lat_offset  # Apply latitude correction
-        current_lon = msg.longitude + self.lon_offset  # Apply longitude correction
+
+        if msg.quality == 1 or msg.quality == 2:
+            current_lat = msg.latitude
+            current_lon = msg.longitude
+        else:
+            current_lat = msg.latitude + self.lat_offset  # Apply latitude correction
+            current_lon = msg.longitude + self.lon_offset  # Apply longitude correction
 
         # Get the coordinates of the current target and the final destination
         target_lat, target_lon = self.itinerary[self.current_target_index]
@@ -72,22 +75,6 @@ class GnssListener(Node):
             # Calculate the distance to the target using the Haversine formula
             distance = self.haversine(current_lat, current_lon, target_lat, target_lon)
 
-            # Calculate the direction (bearing) towards the current position using multiple points
-            points = [(self.previous_lat, self.previous_lon), (current_lat, current_lon)]
-            if len(self.previous_points) >= 2:
-                points = self.previous_points[-2:] + points
-
-            directions = []
-            for i in range(len(points) - 1):
-                directions.append(self.calculate_bearing(points[i][0], points[i][1], points[i + 1][0], points[i + 1][1]))
-
-            current_direction = sum(directions) / len(directions)
-
-            if current_direction == 0 and hasattr(self, 'last_coherent_direction'):
-                current_direction = self.last_coherent_direction
-            else:
-                self.last_coherent_direction = current_direction
-
             # Calculate the direction (bearing) towards the current position
             current_direction = self.calculate_bearing(self.previous_lat, self.previous_lon, current_lat, current_lon)
 
@@ -96,10 +83,6 @@ class GnssListener(Node):
 
             # Calculate the angle difference between current and target directions
             angle_difference = self.calculate_angle_difference(current_direction, target_direction)
-
-            self.previous_points.append((current_lat, current_lon))
-            if len(self.previous_points) > 4:
-                self.previous_points.pop(0)
 
             # Create a new status message
             status_msg = GnssStatus()
