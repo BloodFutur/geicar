@@ -176,19 +176,23 @@ private:
                     
                     if (abs(turn_angle) > 10){
                         frontWheelRotation = turn_angle;
-                        setCarSpeed(5,5);
+                        autonomousPropulsionCmd(10, rightRearPwmCmd);
+                        autonomousPropulsionCmd(10, leftRearPwmCmd);
+                        // setCarSpeed(10,10);
                     }else {
                         frontWheelRotation = 0;
-                        setCarSpeed(10,10);
+                        // setCarSpeed(20,20);
+                        autonomousPropulsionCmd(20, rightRearPwmCmd);
+                        autonomousPropulsionCmd(20, leftRearPwmCmd);
                     }
 
-                    updateSpeedCmd();
+                    // updateSpeedCmd();
                     
-                    RCLCPP_DEBUG(this->get_logger(), "leftSpeedCmd : %f", leftSpeedCmd);
-                    RCLCPP_DEBUG(this->get_logger(), "rightSpeedCmd : %f", rightSpeedCmd);
+                    // RCLCPP_DEBUG(this->get_logger(), "leftSpeedCmd : %f", leftSpeedCmd);
+                    // RCLCPP_DEBUG(this->get_logger(), "rightSpeedCmd : %f", rightSpeedCmd);
 
-                    autonomousPropulsionCmd(rightSpeedCmd, rightRearPwmCmd);
-                    autonomousPropulsionCmd(leftSpeedCmd, leftRearPwmCmd);
+                    // autonomousPropulsionCmd(rightSpeedCmd, rightRearPwmCmd);
+                    // autonomousPropulsionCmd(leftSpeedCmd, leftRearPwmCmd);
 
                     newSteeringCmd(frontWheelRotation,currentAngle,steeringPwmCmd);
 
