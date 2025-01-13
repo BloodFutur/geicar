@@ -105,7 +105,7 @@ def generate_launch_description():
         emulate_tty=True
     )
 
-    ld.add_action(mqtt_client_node)
+    # ld.add_action(mqtt_client_node)
     ld.add_action(joystick_node)
     ld.add_action(joystick_to_cmd_node)
     ld.add_action(can_rx_node)
@@ -114,7 +114,7 @@ def generate_launch_description():
     ld.add_action(imu_filter_madgwick_node)
     ld.add_action(imu_frame_id_modifier_node)
     ld.add_action(system_check_node)
-    ld.add_action(rosbridge_server_node)
+    # ld.add_action(rosbridge_server_node)
     ld.add_action(obstacles_detection_node)
     # ld.add_action(robot_localization_node)
     # ld.add_action(navsat_transform_node)
