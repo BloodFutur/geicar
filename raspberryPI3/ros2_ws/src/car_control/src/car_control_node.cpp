@@ -176,14 +176,14 @@ private:
                     
                     if (abs(turn_angle) > 10){
                         frontWheelRotation = turn_angle;
-                        autonomousPropulsionCmd(20, rightRearPwmCmd);
-                        autonomousPropulsionCmd(20, leftRearPwmCmd);
+                        autonomousPropulsionCmd(10, rightRearPwmCmd);
+                        autonomousPropulsionCmd(10, leftRearPwmCmd);
                         // setCarSpeed(10,10);
                     }else {
                         frontWheelRotation = 0;
                         // setCarSpeed(20,20);
-                        autonomousPropulsionCmd(30, rightRearPwmCmd);
-                        autonomousPropulsionCmd(30, leftRearPwmCmd);
+                        autonomousPropulsionCmd(20, rightRearPwmCmd);
+                        autonomousPropulsionCmd(20, leftRearPwmCmd);
                     }
 
                     // updateSpeedCmd();

@@ -1,5 +1,5 @@
 #include "../include/car_control/steeringCmd.h"
-#define FRONT_WHEEL_MAX_ROTATION 30.0f
+#define FRONT_WHEEL_MAX_ROTATION 23.0f
 #include <algorithm>
 
 // Marcyle group function
