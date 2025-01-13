@@ -58,11 +58,11 @@ def generate_launch_description():
         emulate_tty=True
     )
 
-    rosbridge_server_node = Node(
-        package="rosbridge_server",
-        executable="rosbridge_websocket",
-        emulate_tty=True
-    )
+    # rosbridge_server_node = Node(
+    #     package="rosbridge_server",
+    #     executable="rosbridge_websocket",
+    #     emulate_tty=True
+    # )
 
     obstacles_detection_node = Node(
         package="detection",
@@ -93,11 +93,11 @@ def generate_launch_description():
     #                 ('odometry/gps', 'odometry/gps')]
     # )
 
-    mqtt_client_node = Node(
-        package="mqtt_client",
-        executable="mqtt_client",
-        emulate_tty=True
-    )
+    # mqtt_client_node = Node(
+    #     package="mqtt_client",
+    #     executable="mqtt_client",
+    #     emulate_tty=True
+    # )
 
     gps_following_node = Node(
         package="gps_following",
