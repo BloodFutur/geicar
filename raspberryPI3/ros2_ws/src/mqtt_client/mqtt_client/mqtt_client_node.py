@@ -10,7 +10,7 @@ import time
 
 # MQTT Settings
 BROKER_ADDRESS = "srv665994.hstgr.cloud"
-MQTT_PORT = 1883
+MQTT_PORT = 443
 MQTT_USERNAME = "geicar"
 MQTT_PASSWORD = "geicar"
 
@@ -63,9 +63,10 @@ class Ros2MqttClient(Node):
             self.plate_detection_listener_cb,
             10
         )
-        self.mqtt_client = mqtt.Client()
+        self.mqtt_client = mqtt.Client(transport="websockets")
         self.mqtt_client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
         
+        self.mqtt_client.tls_set()
         self.mqtt_client.on_connect = on_connect
         self.mqtt_client.on_disconnect = on_disconnect
         
