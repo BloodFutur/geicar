@@ -19,6 +19,7 @@
   <exec_depend>system_check</exec_depend>
   <exec_depend>ros2launch</exec_depend>
   <exec_depend>rosbridge_server</exec_depend>
+  <exec_depend>gps_following</exec_depend>
 
 
   <export>

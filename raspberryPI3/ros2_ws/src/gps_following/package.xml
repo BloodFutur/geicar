@@ -7,6 +7,9 @@
   <maintainer email="avyantoine.03@gmail.com">root</maintainer>
   <license>TODO: License declaration</license>
 
+
+  <depend>interfaces</depend>
+
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
