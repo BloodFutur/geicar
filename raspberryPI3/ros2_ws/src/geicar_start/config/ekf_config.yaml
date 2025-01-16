@@ -7,21 +7,21 @@ ekf_filter_node_odom:
     two_d_mode: true
 
     # Specify the sensor data sources (topics)
-    odom0: "/odom/encoder"
-    imu0: "/imu/modified_frame_id"
+    odom0: "/odom/encoder_flip"
+    #imu0: "/imu/modified_frame_id"
 
     # Delay in sensor data processing
     sensor_timeout: 0.1
 
-    imu0_config: [false, false, false,
-                false, false, true,
-                false, false, false,
-                false, false, true,
-                true, false, false]
+    # imu0_config: [false, false, false,
+    #             false, false, true,
+    #             false, false, false,
+    #             false, false, true,
+    #             true, false, false]
 
     odom0_config: [true, true, false,
                 false, false, true,
-                true, false, false,
+                true, true, false,
                 false, false, true,
                 false, false, false]
 
@@ -38,39 +38,86 @@ ekf_filter_node_map:
     # Frequency of the EKF updates
     frequency: 20.0
     two_d_mode: true
+    # Delay in sensor data processing
+    sensor_timeout: 0.15
+    print_diagnostics: false
+    debug: false
 
     # Specify the sensor data sources (topics)
-    odom0: "/odom/encoder"
-    imu0: "/imu/modified_frame_id"
-    odom1: "/odometry/gps"
+    # odom1: "/odom/encoder"
 
+    #imu0: "/imu/modified_frame_id"
 
-    # Delay in sensor data processing
-    sensor_timeout: 0.1
+    odom1: "/odometry/localronan"
 
-    imu0_config: [false, false, false,
+    odom1_config: [true, true, false,
                 false, false, true,
-                false, false, false,
-                false, false, true,
-                true, false, false]
-
-    odom0_config: [true, true, false,
-                false, false, true,
-                true, false, false,
+                true, true, false,
                 false, false, true,
                 false, false, false]
-    
-    odom1_config: [true,  true,  false,
+
+    odom1_differential: true
+    odom1_relative: true
+    odom1_queue_size: 10
+    odom1_nodelay: false
+    odom1_pose_covariance: [1e-3, 0.0, 0.0, 0.0, 0.0, 0.0,
+                            0.0, 1e-3, 0.0, 0.0, 0.0, 0.0,
+                            0.0, 0.0, 2e-1, 0.0, 0.0, 0.0,
+                            0.0, 0.0, 0.0, 2e-1, 0.0, 0.0,
+                            0.0, 0.0, 0.0, 0.0, 1e-3, 0.0,
+                            0.0, 0.0, 0.0, 0.0, 0.0, 1e-4]
+
+
+    odom1_twist_covariance: [1e-2, 0.0, 0.0, 0.0, 0.0, 0.0,
+                              0.0, 1e-2, 0.0, 0.0, 0.0, 0.0,
+                              0.0, 0.0, 1e-1, 0.0, 0.0, 0.0,
+                              0.0, 0.0, 0.0, 1e-1, 0.0, 0.0,
+                              0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+                              0.0, 0.0, 0.0, 0.0, 0.0, 1e-4]
+
+
+
+    odom0: "/odometry/gps"
+    odom0_config: [true,  true,  false,
                 false, false, false,
                 false, false, false,
                 false, false, false,
                 false, false, false]
+
+    odom0_differential: false
+    odom0_relative: false
+    odom0_queue_size: 50
+    odom0_nodelay: false
+    odom0_pose_rejection_threshold: 5.0
+
+    odom0_pose_covariance: [1e-2, 0.0, 0.0, 0.0, 0.0, 0.0,
+                            0.0, 1e-2, 0.0, 0.0, 0.0, 0.0,
+                            0.0, 0.0, 1e1, 0.0, 0.0, 0.0,  # Increase trust in x, y position
+                            0.0, 0.0, 0.0, 1e1, 0.0, 0.0,
+                            0.0, 0.0, 0.0, 0.0, 1e3, 0.0,  # Decrease trust in orientation (roll, pitch, yaw)
+                            0.0, 0.0, 0.0, 0.0, 0.0, 1e3]  # Decrease trust in orientation
+
+
+    use_control: false
+
+    # initial_estimate_covariance: [0.001, 0.001, 0.001, 0.001, 0.001, 0.001,
+    #                           0.001, 0.001, 0.001, 0.001, 0.001, 0.001,
+    #                           0.001, 0.001, 0.001, 0.001, 0.001, 0.001,
+    #                           0.001, 0.001, 0.001, 0.001, 0.001, 0.001,
+    #                           0.001, 0.001, 0.001, 0.001, 0.001, 0.001,
+    #                           0.001, 0.001, 0.001, 0.001, 0.001, 0.001]
+
+    #process_noise_covariance: [0.05, 0.05, 0.01, 0.01, 0.01, 0.01, 0.05, 0.05, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+    # initial_estimate_covariance: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+    #process_noise_covariance: [0.05, 0.05, 0.06, 0.03, 0.03, 0.03, 0.06, 0.025, 0.025, 0.04, 0.01, 0.01, 0.02, 0.01, 0.015]
+    #process_noise_covariance: [0.1, 0.1, 1e-4, 0.01, 0.01, 0.001, 0.05, 0.05, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+    #initial_estimate_covariance: [0.1, 0.1, 1e-6, 0.1, 0.1, 1e-6, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
     
     # Frame IDs
     map_frame: "map"
     odom_frame: "odom"
     base_link_frame: "base_link"
-    world_frame : "map"
+    world_frame : "odom"
     
 navsat_transform:
   ros__parameters:
