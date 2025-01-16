@@ -53,7 +53,7 @@ class Ros2MqttClient(Node):
         super().__init__('ros2_mqtt_client')
         self.sub_gps = self.create_subscription(
             NavSatFix,
-            '/gps/fix',
+            '/gps/filtered',
             self.gps_listener_callback,
             10
         )
