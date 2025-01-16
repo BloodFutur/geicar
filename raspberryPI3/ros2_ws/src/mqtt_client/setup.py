@@ -21,6 +21,8 @@ setup(
     entry_points={
         'console_scripts': [
             'mqtt_client = mqtt_client.mqtt_client_node:main',
+            'odom_yaw_flip = mqtt_client.odom_yaw_flip_node:main',
+            'generatepath = mqtt_client.generatepath_node:main',
         ],
     },
 )
