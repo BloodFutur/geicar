@@ -7,6 +7,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image, CompressedImage
 from cv_bridge import CvBridge
 from ultralytics import YOLO  # To use YOLOv8
+from std_msgs.msg import String
 
 
 class PlateDetection(Node):
@@ -60,6 +61,12 @@ class PlateDetection(Node):
             10
         )
         
+        self.pub_plate_text = self.create_publisher(
+            String,
+            '/detected_plate_text',
+            10
+        )
+        
     def image_callback(self, msg):
         try:
             # Convertion of the ROS message as an OpenCV image
@@ -107,26 +114,34 @@ class PlateDetection(Node):
                         cx1, cy1, cx2, cy2 = map(int, char_box.xyxy[0])
                         char_conf = char_box.conf[0]
                         char_id = char_box.cls[0]
-                        char_label = f"{self.model2.names[int(char_id)]}: {char_conf:.2f}"
-                        characters.append((cx1, char_label))
+                        char_label = self.model2.names[int(char_id)]  # only keep the character
+                        characters.append((cx1, char_label))  # put the character with x coordinate
                         
                         # Draw character bounding box (adjusted to the original image coordinates)
                         cv2.rectangle(plate_roi, (x1 + cx1, y1 + cy1), (x1 + cx2, y1 + cy2), (255, 0, 0), 1)
                         cv2.putText(plate_roi, char_label, (x1 + cx1, y1 + cy1 - 5),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0), 1)
+                        
                 characters.sort(key=lambda x: x[0])
                 plate_text = ''.join([char[1] for char in characters])
                 self.get_logger().info(f"Detected Plate: {plate_text}")
                 
                 try:
-                    #Publish the cropped and annotated plate image
-                    annotated_msg_characters = self.bridge.cv2_to_imgmsg(plate_roi, encoding="bgr8")
-                    annotated_msg_compressed_characters = self.bridge.cv2_to_compressed_imgmsg(plate_roi, dst_format='jpg')
-                    self.pub_char.publish(annotated_msg_characters)
-                    self.pub_char_compressed.publish(annotated_msg_compressed_characters)
-                    self.get_logger().info("Published annotated image on /character_detection")
+                    plate_msg = String()
+                    plate_msg.data = plate_text
+                    self.pub_plate_text.publish(plate_msg)
                 except Exception as e:
-                    self.get_logger().error(f"Failed to publish character detection image: {e}")
+                    self.get_logger().error(f"Failed to publish plate text: {e}")
+                    
+                # try:
+                #     #Publish the cropped and annotated plate image
+                #     annotated_msg_characters = self.bridge.cv2_to_imgmsg(plate_roi, encoding="bgr8")
+                #     annotated_msg_compressed_characters = self.bridge.cv2_to_compressed_imgmsg(plate_roi, dst_format='jpg')
+                #     self.pub_char.publish(annotated_msg_characters)
+                #     self.pub_char_compressed.publish(annotated_msg_compressed_characters)
+                #     self.get_logger().info("Published annotated image on /character_detection")
+                # except Exception as e:
+                #     self.get_logger().error(f"Failed to publish character detection image: {e}")
 
         # Publish annoted image in a ROS topic
         try:
