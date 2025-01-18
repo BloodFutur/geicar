@@ -56,11 +56,11 @@ def generate_launch_description():
     #     output="screen",
     # )
 
-    pure_pursuit_planner_node = Node(
-        package=package_name,
-        executable='pure_pursuit_planner',
-        output="screen",
-    )
+    # pure_pursuit_planner_node = Node(
+    #     package=package_name,
+    #     executable='pure_pursuit_planner',
+    #     output="screen",
+    # )
 
     nodes = [
         rviz_node,
@@ -68,7 +68,7 @@ def generate_launch_description():
         robot_description_rviz_node,
         odometry_pub_node,
         # path_publisher_node,
-        pure_pursuit_planner_node,
+        # pure_pursuit_planner_node,
     ]
 
     return LaunchDescription(nodes)
