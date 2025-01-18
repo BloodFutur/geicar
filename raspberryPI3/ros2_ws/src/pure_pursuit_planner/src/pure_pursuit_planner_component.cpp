@@ -12,12 +12,13 @@ PurePursuitNode::PurePursuitNode()
 
     // Publisher
     cmd_vel_pub = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
+    cmd_vel_rviz_pub = this->create_publisher<geometry_msgs::msg::TwistStamped>("cmd_vel_rviz", 10);
 
     // Subscriber
     odom_sub = this->create_subscription<nav_msgs::msg::Odometry>(
     "odom", 10, std::bind(&PurePursuitNode::odometry_callback, this, _1));
     path_sub = this->create_subscription<nav_msgs::msg::Path>(
-            "tgt_path", 10,
+            "path", 20,
             std::bind(&PurePursuitNode::path_callback, this, std::placeholders::_1));
     
     // Timer callback
@@ -125,7 +126,6 @@ double PurePursuitNode::calcDistance(double point_x, double point_y) const {
 
 void PurePursuitNode::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
-    // オドメトリからx, y, thetaを取得
     x = msg->pose.pose.position.x;
     y = msg->pose.pose.position.y;
 
@@ -143,7 +143,6 @@ void PurePursuitNode::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr
 
 void PurePursuitNode::path_callback(const nav_msgs::msg::Path::SharedPtr msg) {
     if (!path_subscribe_flag) {
-        // 受け取ったパスメッセージから座標を抽出
         for (const auto& pose : msg->poses) {
             cx.push_back(pose.pose.position.x);
             cy.push_back(pose.pose.position.y);
@@ -159,7 +158,6 @@ void PurePursuitNode::path_callback(const nav_msgs::msg::Path::SharedPtr msg) {
             RCLCPP_INFO(this->get_logger(), "Received path point: (%f, %f)", pose.pose.position.x, pose.pose.position.y);
         }
 
-        // 最新のパスに基づいて目標インデックスを更新
         std::tie(target_ind, std::ignore) = searchTargetIndex();
     }
 
@@ -192,5 +190,11 @@ void PurePursuitNode::publishCmd(double v, double w)
         cmd_vel_msg.angular.z = w;
     }
 
+    auto twist_stamped_msg = geometry_msgs::msg::TwistStamped();
+    twist_stamped_msg.header.stamp = this->get_clock()->now();
+    twist_stamped_msg.header.frame_id = "base_link";             
+    twist_stamped_msg.twist = cmd_vel_msg;                     
+    
+    cmd_vel_rviz_pub->publish(twist_stamped_msg);
     cmd_vel_pub->publish(cmd_vel_msg);
 }

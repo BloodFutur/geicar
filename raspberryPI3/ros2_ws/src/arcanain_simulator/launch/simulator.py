@@ -8,9 +8,8 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-    package_name = 'pure_pursuit_planner'
-    simulator_package = 'arcanain_simulator'
-    rviz_file_name = "pure_pursuit_planner_perso.rviz"
+    package_name = 'arcanain_simulator'
+    rviz_file_name = "arcanain_simulator.rviz"
 
     file_path = os.path.expanduser('/home/pi/geicar/raspberryPI3/ros2_ws/src/arcanain_simulator/urdf/mobile_robot.urdf.xml')
 
@@ -42,33 +41,34 @@ def generate_launch_description():
         executable='joint_state_publisher',
         name='joint_state_publisher',
         output='both',
+        parameters=[{'joint_state_publisher': robot_description}]
     )
 
     odometry_pub_node = Node(
-        package=simulator_package,
+        package=package_name,
         executable='odometry_pub',
         output="screen",
     )
 
-    # path_publisher_node = Node(
-    #     package='path_smoother',
-    #     executable='path_publisher',
-    #     output="screen",
-    # )
-
-    pure_pursuit_planner_node = Node(
+    obstacle_pub_node = Node(
         package=package_name,
-        executable='pure_pursuit_planner',
+        executable='obstacle_pub',
+        output="screen",
+    )
+
+    waypoint_pub_node = Node(
+        package=package_name,
+        executable='waypoint_pub',
         output="screen",
     )
 
     nodes = [
         rviz_node,
-        joint_state_publisher_rviz_node,
         robot_description_rviz_node,
+        joint_state_publisher_rviz_node,
         odometry_pub_node,
-        # path_publisher_node,
-        pure_pursuit_planner_node,
+        obstacle_pub_node,
+        waypoint_pub_node,
     ]
 
     return LaunchDescription(nodes)

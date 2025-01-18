@@ -113,10 +113,18 @@ def generate_launch_description():
         name='ekf_filter_node_map',
 	    output='screen',
         parameters=[os.path.join(localization_config_dir, 'ekf_config.yaml')],
-        remappings=[('odometry/filtered', 'odometry/global')]
+        remappings=[('imu/data', '/imu/modified_frame_id'),
+                    ('gps/fix', 'gps/fix'), 
+                    ('gps/filtered', 'gps/filtered'),
+                    ('odometry/gps', 'odometry/gps')]           
     )
-       
 
+    pure_pursuit_planner_node = Node(
+        package='pure_pursuit_planner',
+        executable='pure_pursuit_planner',
+        output="screen",
+    )   
+    
     mqtt_client_node = Node(
         package="mqtt_client",
         executable="mqtt_client",
@@ -137,5 +145,6 @@ def generate_launch_description():
     ld.add_action(local_localization_node)
     ld.add_action(navsat_transform_node)
     ld.add_action(global_localization_node)
+    ld.add_action(pure_pursuit_planner_node)
 
     return ld
