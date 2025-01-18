@@ -118,6 +118,12 @@ def generate_launch_description():
                     ('gps/filtered', 'gps/filtered'),
                     ('odometry/gps', 'odometry/gps')]           
     )
+    
+    path_publisher_node = Node(
+        package='path_smoother',
+        executable='path_publisher',
+        output="screen",
+    )
 
     pure_pursuit_planner_node = Node(
         package='pure_pursuit_planner',
@@ -145,6 +151,7 @@ def generate_launch_description():
     ld.add_action(local_localization_node)
     ld.add_action(navsat_transform_node)
     ld.add_action(global_localization_node)
+    ld.add_action(path_publisher_node)
     ld.add_action(pure_pursuit_planner_node)
-
+    
     return ld

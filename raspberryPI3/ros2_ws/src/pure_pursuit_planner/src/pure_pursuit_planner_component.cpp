@@ -66,10 +66,10 @@ std::pair<double, double> PurePursuitNode::purePursuitControl(int& pind) {
 
     pind = ind;
 
-    RCLCPP_INFO(this->get_logger(), "Current position: x=%.2f, y=%.2f, yaw=%.2f", x, y, yaw);
-    RCLCPP_INFO(this->get_logger(), "Target position: x=%.2f, y=%.2f", target_lookahed_x, target_lookahed_y);
-    RCLCPP_INFO(this->get_logger(), "Target index: %d, Lf=%.2f", ind, Lf);
-    RCLCPP_INFO(this->get_logger(), "Calculated: alpha=%.2f, v=%.2f, w=%.2f", alpha, v, w);
+    // RCLCPP_INFO(this->get_logger(), "Current position: x=%.2f, y=%.2f, yaw=%.2f", x, y, yaw);
+    // RCLCPP_INFO(this->get_logger(), "Target position: x=%.2f, y=%.2f", target_lookahed_x, target_lookahed_y);
+    // RCLCPP_INFO(this->get_logger(), "Target index: %d, Lf=%.2f", ind, Lf);
+    // RCLCPP_INFO(this->get_logger(), "Calculated: alpha=%.2f, v=%.2f, w=%.2f", alpha, v, w);
 
     return { v, w };
 }
@@ -138,7 +138,7 @@ void PurePursuitNode::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr
     yaw = yaw_tmp;
 
     // Ajout
-    RCLCPP_INFO(this->get_logger(), "Odom received: x=%f, y=%f, yaw=%f", x, y, yaw);
+    // RCLCPP_INFO(this->get_logger(), "Odom received: x=%f, y=%f, yaw=%f", x, y, yaw);
 }
 
 void PurePursuitNode::path_callback(const nav_msgs::msg::Path::SharedPtr msg) {
@@ -163,7 +163,7 @@ void PurePursuitNode::path_callback(const nav_msgs::msg::Path::SharedPtr msg) {
 
     path_subscribe_flag = true;
     // Ajout 
-    RCLCPP_INFO(this->get_logger(), "Path data received successfully.");
+    // RCLCPP_INFO(this->get_logger(), "Path data received successfully.");
 }
 
 void PurePursuitNode::publishCmd(double v, double w)
