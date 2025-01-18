@@ -3,6 +3,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/twist.hpp"
+#include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/path.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tf2/LinearMath/Quaternion.h"
@@ -35,6 +36,7 @@ private:
     void path_callback(const nav_msgs::msg::Path::SharedPtr msg);
     void publishCmd(double v, double w);
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub;
+    rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr cmd_vel_rviz_pub;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub;
     rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_sub;
     rclcpp::TimerBase::SharedPtr timer;

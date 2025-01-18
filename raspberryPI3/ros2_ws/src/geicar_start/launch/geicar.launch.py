@@ -91,6 +91,12 @@ def generate_launch_description():
                     ('gps/fix', 'gps/fix'), 
                     ('gps/filtered', 'gps/filtered'),
                     ('odometry/gps', 'odometry/gps')]           
+    )
+
+    pure_pursuit_planner_node = Node(
+        package='pure_pursuit_planner',
+        executable='pure_pursuit_planner',
+        output="screen",
     )   
     
     mqtt_client_node = Node(
@@ -112,5 +118,6 @@ def generate_launch_description():
     ld.add_action(obstacles_detection_node)
     ld.add_action(robot_localization_node)
     ld.add_action(navsat_transform_node)
+    ld.add_action(pure_pursuit_planner_node)
 
     return ld
