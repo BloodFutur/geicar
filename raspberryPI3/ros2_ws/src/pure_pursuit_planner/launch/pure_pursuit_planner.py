@@ -12,7 +12,7 @@ def generate_launch_description():
     simulator_package = 'arcanain_simulator'
     rviz_file_name = "pure_pursuit_planner_perso.rviz"
 
-    file_path = os.path.expanduser('/home/pi/geicar/raspberryPI3/ros2_ws/src/arcanain_simulator/urdf/mobile_robot.urdf.xml')
+    file_path = os.path.expanduser('src/arcanain_simulator/urdf/mobile_robot.urdf.xml')
 
     with open(file_path, 'r') as file:
         robot_description = file.read()
