@@ -9,7 +9,7 @@ env:
 
 jobs:
   RPi-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     defaults:
       run:
           working-directory: ./raspberryPI3/ros2_ws
@@ -70,7 +70,7 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         status: ${{ job.status }}
   Jetson-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     defaults:
       run:
           working-directory: ./jetsonNano/ros2_ws
