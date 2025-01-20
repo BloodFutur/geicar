@@ -37,6 +37,12 @@ class GnssListener(Node):
         self.lat_offset = 0.000023239  # Example offset in latitude
         self.lon_offset = 0.000022377  # Example offset in longitude
 
+        # Define the lookahead distance for Pure Pursuit (in meters)
+        self.lookahead_distance = 1.0  # to adjust
+
+        # Choose controller
+        self.is_pure_pursuit_controller = True  # True => pure pursuit, False => Antoine's controller
+
     def load_itinerary_from_csv(self, file_name):
         # Load GPS points from a CSV file
         itinerary = []
@@ -67,61 +73,128 @@ class GnssListener(Node):
             current_lat = msg.latitude + self.lat_offset  # Apply latitude correction
             current_lon = msg.longitude + self.lon_offset  # Apply longitude correction
 
-        # Get the coordinates of the current target and the final destination
-        target_lat, target_lon = self.itinerary[self.current_target_index]
-        final_lat, final_lon = self.itinerary[-1]  # Last point in the itinerary
+        if not self.is_pure_pursuit_controller:
+            # Get the coordinates of the current target and the final destination
+            target_lat, target_lon = self.itinerary[self.current_target_index]
+            final_lat, final_lon = self.itinerary[-1]  # Last point in the itinerary
 
-        if self.previous_lat is not None and self.previous_lon is not None:
-            # Calculate the distance to the target using the Haversine formula
-            distance = self.haversine(current_lat, current_lon, target_lat, target_lon)
+            if self.previous_lat is not None and self.previous_lon is not None:
+                # Calculate the distance to the target using the Haversine formula
+                distance = self.haversine(current_lat, current_lon, target_lat, target_lon)
 
-            # Calculate the direction (bearing) towards the current position
-            current_direction = self.calculate_bearing(self.previous_lat, self.previous_lon, current_lat, current_lon)
+                # Calculate the direction (bearing) towards the current position
+                current_direction = self.calculate_bearing(self.previous_lat, self.previous_lon, current_lat, current_lon)
 
-            # Calculate the direction (bearing) towards the new point
-            target_direction = self.calculate_bearing(current_lat, current_lon, target_lat, target_lon)  # Example target point
+                # Calculate the direction (bearing) towards the new point
+                target_direction = self.calculate_bearing(current_lat, current_lon, target_lat, target_lon)  # Example target point
 
-            # Calculate the angle difference between current and target directions
-            angle_difference = self.calculate_angle_difference(current_direction, target_direction)
+                # Calculate the angle difference between current and target directions
+                angle_difference = self.calculate_angle_difference(current_direction, target_direction)
 
-            # Create a new status message
-            status_msg = GnssStatus()
-            status_msg.current_latitude = current_lat
-            status_msg.current_longitude = current_lon
-            status_msg.target_latitude = target_lat
-            status_msg.target_longitude = target_lon
-            status_msg.distance_to_target = distance
-            status_msg.previous_latitude = self.previous_lat
-            status_msg.previous_longitude = self.previous_lon
-            status_msg.current_direction = float(current_direction)
-            status_msg.target_direction = target_direction
-            status_msg.turn_angle = angle_difference
+                # Create a new status message
+                status_msg = GnssStatus()
+                status_msg.current_latitude = current_lat
+                status_msg.current_longitude = current_lon
+                status_msg.target_latitude = target_lat
+                status_msg.target_longitude = target_lon
+                status_msg.distance_to_target = distance
+                status_msg.previous_latitude = self.previous_lat
+                status_msg.previous_longitude = self.previous_lon
+                status_msg.current_direction = float(current_direction)
+                status_msg.target_direction = target_direction
+                status_msg.turn_angle = angle_difference
 
-            # Set the direction message based on the angle difference
-            if angle_difference > 10:
-                status_msg.direction_message = f"Turn Right by {angle_difference:.2f} degrees"
-            elif angle_difference < -10:
-                status_msg.direction_message = f"Turn Left by {abs(angle_difference):.2f} degrees"
-            else:
-                status_msg.direction_message = "Go Straight"
-
-            # Check if the vehicle is close enough to the target (within 10 cm)
-            if distance < 30:  # 0.0001 km = 10 cm
-                # Move to the next target in the itinerary
-                self.current_target_index += 1
-                if self.current_target_index >= len(self.itinerary):
-                    status_msg.status_message = "End of itinerary reached!"
-                    self.current_target_index = 0  # Restart from the beginning of the itinerary
+                # Set the direction message based on the angle difference
+                if angle_difference > 10:
+                    status_msg.direction_message = f"Turn Right by {angle_difference:.2f} degrees"
+                elif angle_difference < -10:
+                    status_msg.direction_message = f"Turn Left by {abs(angle_difference):.2f} degrees"
                 else:
-                    status_msg.status_message = f"Arrived at target {self.current_target_index}. Moving to next target."
-            else:
-                status_msg.status_message = f"Navigating to target {self.current_target_index}."
+                    status_msg.direction_message = "Go Straight"
 
-            # Publish the status message
-            self.publisher.publish(status_msg)
+                # Check if the vehicle is close enough to the target (within 10 cm)
+                if distance < 30:  # 0.0001 km = 10 cm
+                    # Move to the next target in the itinerary
+                    self.current_target_index += 1
+                    if self.current_target_index >= len(self.itinerary):
+                        status_msg.status_message = "End of itinerary reached!"
+                        self.current_target_index = 0  # Restart from the beginning of the itinerary
+                    else:
+                        status_msg.status_message = f"Arrived at target {self.current_target_index}. Moving to next target."
+                else:
+                    status_msg.status_message = f"Navigating to target {self.current_target_index}."
+
+                # Publish the status message
+                self.publisher.publish(status_msg)
+
+            self.previous_lat = current_lat
+            self.previous_lon = current_lon
+        else:
+            # Find the lookahead point on the trajectory
+            lookahead_point = self.find_lookahead_point(current_lat, current_lon)
+
+            if lookahead_point is None:
+                self.get_logger().info("No valid lookahead point found. Ending navigation.")
+                return
+            
+        lookahead_lat, lookahead_lon = lookahead_point
+
+        # Calculate the curvature to reach the lookahead point
+        curvature = self.calculate_curvature(current_lat, current_lon, lookahead_lat, lookahead_lon)
+
+        # Calculate the steering angle
+        steering_angle = atan2(2 * curvature * self.lookahead_distance, 1)
+
+        # Publish the status message
+        status_msg = GnssStatus()
+        status_msg.current_latitude = current_lat
+        status_msg.current_longitude = current_lon
+        status_msg.target_latitude = lookahead_lat
+        status_msg.target_longitude = lookahead_lon
+        status_msg.turn_angle = degrees(steering_angle)
+        status_msg.status_message = "Following trajectory using Pure Pursuit."
+        self.publisher.publish(status_msg)
+        
+        # Set the direction message based on the angle difference
+        if degrees(steering_angle) > 10:
+            status_msg.direction_message = f"Turn Right by {degrees(steering_angle):.2f} degrees"
+        elif degrees(steering_angle) < -10:
+            status_msg.direction_message = f"Turn Left by {abs(degrees(steering_angle)):.2f} degrees"
+        else:
+            status_msg.direction_message = "Go Straight"
+            
+        # Publish the status message
+        self.publisher.publish(status_msg)
 
         self.previous_lat = current_lat
         self.previous_lon = current_lon
+
+    def find_lookahead_point(self, current_lat, current_lon):
+        """Find the first point in the itinerary at least lookahead_distance away."""
+        for lat, lon in self.itinerary:
+            if self.haversine(current_lat, current_lon, lat, lon) >= self.lookahead_distance:
+                return lat, lon
+        return None
+
+    def calculate_curvature(self, current_lat, current_lon, target_lat, target_lon):
+        """
+        Calculate the curvature to reach the target point.
+        Curvature is defined as 1 / radius of the turning circle.
+        """
+        # Convert to local coordinates assuming flat Earth (small distances)
+        dx = self.haversine(current_lat, current_lon, current_lat, target_lon) * (
+            1 if target_lon > current_lon else -1
+        )
+        dy = self.haversine(current_lat, current_lon, target_lat, current_lon) * (
+            1 if target_lat > current_lat else -1
+        )
+
+        # Avoid division by zero if dx and dy are both zero
+        if dx == 0 and dy == 0:
+            return 0.0
+
+        # Calculate curvature
+        return 2 * dy / (dx**2 + dy**2)
 
     def haversine(self, lat1, lon1, lat2, lon2):
         # Convert coordinates to radians
