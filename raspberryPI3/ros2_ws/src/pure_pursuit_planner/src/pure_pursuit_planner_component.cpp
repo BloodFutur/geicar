@@ -16,7 +16,7 @@ PurePursuitNode::PurePursuitNode()
 
     // Subscriber
     odom_sub = this->create_subscription<nav_msgs::msg::Odometry>(
-    "odom", 10, std::bind(&PurePursuitNode::odometry_callback, this, _1));
+    "odometry/global", 10, std::bind(&PurePursuitNode::odometry_callback, this, _1));
     path_sub = this->create_subscription<nav_msgs::msg::Path>(
             "path", 20,
             std::bind(&PurePursuitNode::path_callback, this, std::placeholders::_1));
