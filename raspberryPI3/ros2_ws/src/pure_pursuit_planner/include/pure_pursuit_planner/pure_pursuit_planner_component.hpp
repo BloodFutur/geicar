@@ -57,10 +57,10 @@ private:
     const double dt = 0.1; // [s] time tick
 
     // cauvature parameter
-    double minCurvature = 0.0;
-    double maxCurvature = 3.0;
-    double minVelocity = 0.1;
-    double maxVelocity = 0.3;
+    double minCurvature = 0.0001;
+    double maxCurvature = 0.7;
+    double minVelocity = 0.14915;
+    double maxVelocity = 0.4971;
 };
 
 #endif // PURE_PURSUIT_PLANNER_COMPONENT_HPP
