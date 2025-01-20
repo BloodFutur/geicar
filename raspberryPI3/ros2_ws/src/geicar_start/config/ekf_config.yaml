@@ -7,7 +7,7 @@ ekf_filter_node_odom:
     two_d_mode: true
 
     # Specify the sensor data sources (topics)
-    odom0: "/odom/encoder_flip"
+    odom0: "/odom/encoder"
     #imu0: "/imu/modified_frame_id"
 
     # Delay in sensor data processing
@@ -48,7 +48,7 @@ ekf_filter_node_map:
 
     #imu0: "/imu/modified_frame_id"
 
-    odom1: "/odometry/localronan"
+    odom1: "/odometry/local"
 
     odom1_config: [true, true, false,
                 false, false, true,
@@ -100,19 +100,6 @@ ekf_filter_node_map:
 
     use_control: false
 
-    # initial_estimate_covariance: [0.001, 0.001, 0.001, 0.001, 0.001, 0.001,
-    #                           0.001, 0.001, 0.001, 0.001, 0.001, 0.001,
-    #                           0.001, 0.001, 0.001, 0.001, 0.001, 0.001,
-    #                           0.001, 0.001, 0.001, 0.001, 0.001, 0.001,
-    #                           0.001, 0.001, 0.001, 0.001, 0.001, 0.001,
-    #                           0.001, 0.001, 0.001, 0.001, 0.001, 0.001]
-
-    #process_noise_covariance: [0.05, 0.05, 0.01, 0.01, 0.01, 0.01, 0.05, 0.05, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
-    # initial_estimate_covariance: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-    #process_noise_covariance: [0.05, 0.05, 0.06, 0.03, 0.03, 0.03, 0.06, 0.025, 0.025, 0.04, 0.01, 0.01, 0.02, 0.01, 0.015]
-    #process_noise_covariance: [0.1, 0.1, 1e-4, 0.01, 0.01, 0.001, 0.05, 0.05, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
-    #initial_estimate_covariance: [0.1, 0.1, 1e-6, 0.1, 0.1, 1e-6, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-    
     # Frame IDs
     map_frame: "map"
     odom_frame: "odom"
