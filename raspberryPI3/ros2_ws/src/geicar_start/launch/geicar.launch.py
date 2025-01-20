@@ -72,6 +72,32 @@ def generate_launch_description():
 
     localization_config_dir = os.path.join(get_package_share_directory('geicar_start'), 'config')
 
+
+    navsat_transform_node = Node(
+        package='robot_localization',
+        executable='navsat_transform_node',
+        name='navsat_transform_node',
+        output='screen',
+        parameters=[
+            {'use_sim_time': False},
+            {'magnetic_declination_radians': 0.0},
+            {'yaw_offset': 0.0},
+            {'zero_altitude': False},
+            {'base_link_frame': 'base_link'},
+            {'world_frame': 'odom'},
+        ],
+        remappings=[
+            ('/imu', '/imu/modified_frame_id'),
+            ('/gps/fix', '/gps/fix'),
+            ('/odometry/filtered', '/odometry/global'),
+            ('/odometry/gps', '/odometry/gps'),
+        ],
+        arguments=[
+            '--ros-args', '--log-level', 'debug'
+        ]
+    )
+        
+    
     local_localization_node = Node(
         package='robot_localization', 
         executable='ekf_node', 
@@ -80,19 +106,6 @@ def generate_launch_description():
         parameters=[os.path.join(localization_config_dir, 'ekf_config.yaml')],
         remappings=[('odometry/filtered', 'odometry/local')]
     ) 
-
-    navsat_transform_node = Node(
-        package='robot_localization', 
-        executable='navsat_transform_node', 
-        name='navsat_transform',
-        output='screen',
-        parameters=[os.path.join(localization_config_dir, 'ekf_config.yaml')],
-        remappings=[('imu/data', '/imu/modified_frame_id'),
-                    ('gps/fix', 'gps/fix'), 
-                    ('gps/filtered', 'gps/filtered'),
-                    ('odometry/gps', 'odometry/gps')]           
-    )
-        
     
     global_localization_node = Node(
         package='robot_localization', 
