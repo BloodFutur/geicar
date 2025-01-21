@@ -66,10 +66,10 @@ std::pair<double, double> PurePursuitNode::purePursuitControl(int& pind) {
 
     pind = ind;
 
-    // RCLCPP_INFO(this->get_logger(), "Current position: x=%.2f, y=%.2f, yaw=%.2f", x, y, yaw);
-    // RCLCPP_INFO(this->get_logger(), "Target position: x=%.2f, y=%.2f", target_lookahed_x, target_lookahed_y);
-    // RCLCPP_INFO(this->get_logger(), "Target index: %d, Lf=%.2f", ind, Lf);
-    // RCLCPP_INFO(this->get_logger(), "Calculated: alpha=%.2f, v=%.2f, w=%.2f", alpha, v, w);
+    RCLCPP_DEBUG(this->get_logger(), "Current position: x=%.2f, y=%.2f, yaw=%.2f", x, y, yaw);
+    RCLCPP_DEBUG(this->get_logger(), "Target position: x=%.2f, y=%.2f", target_lookahed_x, target_lookahed_y);
+    RCLCPP_DEBUG(this->get_logger(), "Target index: %d, Lf=%.2f", ind, Lf);
+    RCLCPP_DEBUG(this->get_logger(), "Calculated: alpha=%.2f, v=%.2f, w=%.2f", alpha, v, w);
 
     return { v, w };
 }
