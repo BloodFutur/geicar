@@ -4,7 +4,8 @@ import cv2
 import numpy as np
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import Image, String
+from sensor_msgs.msg import Image
+from std_msgs.msg import String
 from cv_bridge import CvBridge
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 from ultralytics import YOLO  # YOLOv8 for detection
