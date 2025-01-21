@@ -143,7 +143,7 @@ private:
                 double v = (v_left + v_right) / 2.0;
 
                 // Compute angular velocity using the steering angle
-                double fixed_steering_angle = motorsFeedbackMsg.steering_angle;
+                double fixed_steering_angle = -motorsFeedbackMsg.steering_angle;
                 if (fixed_steering_angle > -0.1 && fixed_steering_angle < 0.1) {
                     fixed_steering_angle = 0.0;
                 } 
