@@ -5,7 +5,7 @@ from std_msgs.msg import String
 
 class VerificationNode(Node):
     def __init__(self):
-        super().__init__('Extracted Text Verification Node')
+        super().__init__('VerificationNode')
 
         self.buffer_size = 10 # Buffer size for detected texts
         self.detected_texts = []  # Buffer for detected texts
