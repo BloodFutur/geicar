@@ -2,6 +2,8 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 import os
 from ament_index_python.packages import get_package_share_directory
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 def generate_launch_description():
@@ -72,52 +74,17 @@ def generate_launch_description():
 
     localization_config_dir = os.path.join(get_package_share_directory('geicar_start'), 'config')
 
+        # Get the path to the secondary launch file
+    launch_dir = os.path.join(get_package_share_directory('geicar_start'),'launch')
+    
+    navsat_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(launch_dir, 'navsat.launch.py'))
+    ),
+    
+    sensor_fusion_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(launch_dir, 'ekf.launch.py'))
+    ),
 
-    navsat_transform_node = Node(
-        package='robot_localization',
-        executable='navsat_transform_node',
-        name='navsat_transform_node',
-        output='screen',
-        parameters=[
-            {'use_sim_time': False},
-            {'magnetic_declination_radians': 0.0},
-            {'yaw_offset': 0.0},
-            {'zero_altitude': False},
-            {'base_link_frame': 'base_link'},
-            {'world_frame': 'odom'},
-        ],
-        remappings=[
-            ('/imu', '/imu/modified_frame_id'),
-            ('/gps/fix', '/gps/fix'),
-            ('/odometry/filtered', '/odometry/global'),
-            ('/odometry/gps', '/odometry/gps'),
-        ],
-        arguments=[
-            '--ros-args', '--log-level', 'debug'
-        ]
-    )
-        
-    
-    local_localization_node = Node(
-        package='robot_localization', 
-        executable='ekf_node', 
-        name='ekf_filter_node_odom',
-        output='screen',
-        parameters=[os.path.join(localization_config_dir, 'ekf_config.yaml')],
-        remappings=[('odometry/filtered', 'odometry/local')]
-    ) 
-    
-    global_localization_node = Node(
-        package='robot_localization', 
-        executable='ekf_node', 
-        name='ekf_filter_node_map',
-	    output='screen',
-        parameters=[os.path.join(localization_config_dir, 'ekf_config.yaml')],
-        remappings=[('imu/data', '/imu/modified_frame_id'),
-                    ('gps/fix', 'gps/fix'), 
-                    ('gps/filtered', 'gps/filtered'),
-                    ('odometry/gps', 'odometry/gps')]           
-    )
     
     path_publisher_node = Node(
         package='path_smoother',
@@ -146,11 +113,9 @@ def generate_launch_description():
     ld.add_action(imu_filter_madgwick_node)
     ld.add_action(imu_frame_id_modifier_node)
     ld.add_action(system_check_node)
-    ld.add_action(rosbridge_server_node)
     ld.add_action(obstacles_detection_node)
-    ld.add_action(local_localization_node)
-    ld.add_action(navsat_transform_node)
-    ld.add_action(global_localization_node)
+    ld.add_action(navsat_launch)
+    ld.add_action(sensor_fusion_launch)
     ld.add_action(path_publisher_node)
     ld.add_action(pure_pursuit_planner_node)
     
