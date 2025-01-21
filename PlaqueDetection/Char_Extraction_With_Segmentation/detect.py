@@ -6,7 +6,7 @@ from ultralytics import YOLO
 
 def load_model():
     #Loads the YOLOv8 model.
-    model = YOLO(r'C:\Users\33750\Documents\Projet_5SIEC\Char_extract\best.pt')
+    model = YOLO('./best.pt')
     return model
 
 
