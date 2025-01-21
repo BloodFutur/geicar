@@ -46,10 +46,47 @@ def generate_launch_description():
         emulate_tty=True
     )
 
+    # Buffering  node
+    BufferingNode= Node(
+        package='usb_cam',  # name of the package where you can find the .py script of the buffering
+        executable='buffer_node.py',  # Name of the Python file
+        name='BufferingNode',  # Name of the ROS node
+        output='screen',
+        parameters=[{
+            'camera_topic': '/image_raw',  # If needed you can change the name of the camera topic 
+        }],
+        emulate_tty=True
+    )
+    # LPD Pipeline Node
+    PlateDetection= Node(
+        package='usb_cam',  # name of the package where you can find the .py script of the buffering
+        executable='LPD_Pipeline.py',  # Name of the Python file
+        name='LPD_Pipeline_Node',  # Name of the ROS node
+        output='screen',
+        parameters=[{
+            'buffer_topic': '/buffered_images',  # Buffered images topic
+        }],
+        emulate_tty=True
+    )
+    # Verification Node
+    VerificationNode= Node(
+        package='usb_cam',  # name of the package where you can find the .py script of the buffering
+        executable='verification_node.py',  # Name of the Python file
+        name='Verification_Node',  # Name of the ROS node
+        output='screen',
+        parameters=[{
+            'Buffer_Extracted_text_topic': '/detected_texts',  # Buffered images topic
+        }],
+        emulate_tty=True
+    )
+
 
     ld.add_action(lidar_node)
     ld.add_action(camera_node)
     ld.add_action(system_check_ack_node)
-    ld.add_action(plate_detection_node)
+    #ld.add_action(plate_detection_node)
+    ld.add_action(BufferingNode)
+    ld.add_action(PlateDetection)
+    ld.add_action(VerificationNode)
 
     return ld

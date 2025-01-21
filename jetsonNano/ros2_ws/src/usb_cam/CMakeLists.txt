@@ -47,7 +47,15 @@ rclcpp_components_register_node(${PROJECT_NAME}_node
 )
 
 install(
-  PROGRAMS scripts/show_image.py scripts/plate_detection.py
+  PROGRAMS 
+    scripts/show_image.py 
+    scripts/plate_detection.py 
+    scripts/buffer_node.py 
+    scripts/LPD_Pipeline.py 
+    scripts/verification_node.py 
+    scripts/Tilt_Corrector.py 
+    scripts/Segmentor.py
+    
   DESTINATION lib/${PROJECT_NAME})
 
 ament_auto_package(
