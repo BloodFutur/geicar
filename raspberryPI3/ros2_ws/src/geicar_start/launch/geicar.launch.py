@@ -74,16 +74,15 @@ def generate_launch_description():
 
     localization_config_dir = os.path.join(get_package_share_directory('geicar_start'), 'config')
 
-        # Get the path to the secondary launch file
-    launch_dir = os.path.join(get_package_share_directory('geicar_start'),'launch')
+    launch_dir = os.path.join(get_package_share_directory('geicar_start'), 'launch')
     
     navsat_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(launch_dir, 'navsat.launch.py'))
-    ),
+    )
     
     sensor_fusion_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(launch_dir, 'ekf.launch.py'))
-    ),
+    )
 
     
     path_publisher_node = Node(

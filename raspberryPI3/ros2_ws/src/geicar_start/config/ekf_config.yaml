@@ -44,11 +44,11 @@ ekf_filter_node_map:
     debug: false
 
     # Specify the sensor data sources (topics)
-    # odom1: "/odom/encoder"
+    odom1: "/odom/encoder"
 
     #imu0: "/imu/modified_frame_id"
 
-    odom1: "/odometry/local"
+    # odom1: "/odometry/local"
 
     odom1_config: [true, true, false,
                 false, false, true,

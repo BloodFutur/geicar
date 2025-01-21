@@ -43,7 +43,7 @@ public:
         obstacle_detected = false ;  
 
         pwm_cmd_pure_pursuit = 0;
-        steering_angle_pwm_pure_pursuit = 0.0;      
+        steering_angle_pwm_pure_pursuit = 0;      
 
         publisher_can_= this->create_publisher<interfaces::msg::MotorsOrder>("motors_order", 10);
 
@@ -136,7 +136,7 @@ private:
     //Callback function for the pure pursuit output
     void outputPurePursuitCallback(const geometry_msgs::msg::Twist & cmd_vel){
         double v = cmd_vel.linear.x;   
-        double omega = cmd_vel.angular.z; 
+        double omega = -cmd_vel.angular.z; 
         
         double steering_angle = 0.0;
         if (abs(v) < 0.0001) {
@@ -144,7 +144,7 @@ private:
             steering_angle = steering_angle*50 + 50;
         }
         steering_angle = std::clamp(steering_angle, 0.0, 100.0);
-        this->steering_angle_pwm_pure_pursuit = steering_angle; 
+        this->steering_angle_pwm_pure_pursuit = static_cast<int>(steering_angle); 
         this->pwm_cmd_pure_pursuit = velocity_to_pwm(v);
     } 
 
@@ -383,7 +383,7 @@ private:
 
     //Pure pursuit command output
     int pwm_cmd_pure_pursuit;
-    float steering_angle_pwm_pure_pursuit;
+    int steering_angle_pwm_pure_pursuit;
 };
 
 
