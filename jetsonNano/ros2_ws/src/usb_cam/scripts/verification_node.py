@@ -26,6 +26,7 @@ class VerificationNode(Node):
         # Process when buffer is full
         if len(self.detected_texts) == self.buffer_size:
             verified_text = self.validate_text()
+            self.get_logger().info(f"Verified Text: {verified_text}")
             self.publish_verified_text(verified_text)
             self.detected_texts.clear()
 
