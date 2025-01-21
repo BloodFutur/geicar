@@ -61,7 +61,7 @@ def generate_launch_description():
     PlateDetection= Node(
         package='usb_cam',  # name of the package where you can find the .py script of the buffering
         executable='LPD_Pipeline.py',  # Name of the Python file
-        name='LPD_Pipeline_Node',  # Name of the ROS node
+        name='LPDPipelineNode',  # Name of the ROS node
         output='screen',
         parameters=[{
             'buffer_topic': '/buffered_images',  # Buffered images topic
@@ -72,7 +72,7 @@ def generate_launch_description():
     VerificationNode= Node(
         package='usb_cam',  # name of the package where you can find the .py script of the buffering
         executable='verification_node.py',  # Name of the Python file
-        name='Verification_Node',  # Name of the ROS node
+        name='VerificationNode',  # Name of the ROS node
         output='screen',
         parameters=[{
             'Buffer_Extracted_text_topic': '/detected_texts',  # Buffered images topic
