@@ -138,8 +138,8 @@ private:
         double v = cmd_vel.linear.x;   
         double omega = -cmd_vel.angular.z; 
         
-        double steering_angle = 0.0;
-        if (abs(v) < 0.0001) {
+        double steering_angle = 50.0;
+        if (abs(v) > 0.0001) {
             steering_angle = std::atan(WHEEL_BASE * omega / v) / ANGLE_MAX;
             steering_angle = steering_angle*50 + 50;
         }
