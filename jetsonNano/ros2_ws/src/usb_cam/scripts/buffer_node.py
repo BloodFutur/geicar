@@ -9,7 +9,7 @@ import time
 
 class BufferingNode(Node):
     def __init__(self):
-        super().__init__('buffering_node')
+        super().__init__('BufferingNode')
 
         self.buffer_size = 10  # Max buffer size
         self.buffer = deque(maxlen=self.buffer_size)  # Circular buffer

@@ -14,7 +14,7 @@ import easyocr  # For OCR
 
 class PlateDetection(Node):
     def __init__(self):
-        super().__init__('License Plate Detection and Recognition Pipeline Node')
+        super().__init__('LPDPipelineNode')
 
         # CvBridge for the conversion between ROS and OpenCV
         self.bridge = CvBridge()
