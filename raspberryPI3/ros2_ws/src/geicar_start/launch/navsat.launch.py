@@ -20,7 +20,7 @@ def generate_launch_description():
             remappings=[
                 ('/imu', '/imu/modified_frame_id'),
                 ('/gps/fix', '/gps/fix'),
-                ('/odometry/filtered', '/odometry/globalronan'),
+                ('/odometry/filtered', '/odometry/localronan'),
                 ('/odometry/gps', '/odometry/gps'),
             ],
             arguments=[
