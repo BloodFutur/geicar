@@ -24,7 +24,7 @@ def generate_launch_description():
                 ('/odometry/gps', '/odometry/gps'),
             ],
             arguments=[
-                '--ros-args', '--log-level', 'debug'
+                '--ros-args', '--log-level', 'info'
             ]
         )
     ])
