@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import Image, CompressedImage
+from sensor_msgs.msg import Image, CompressedImage, NavSatFix
 from cv_bridge import CvBridge
 from ultralytics import YOLO  # To use YOLOv8
 from std_msgs.msg import String
@@ -18,13 +18,13 @@ class PlateDetection(Node):
         self.bridge = CvBridge()
 
         # Load the YOLOv8 model for the plate detection
-        #self.model = YOLO("/home/pi/geicar/PlaqueDetection/runs/detect/train7/weights/best.pt")  # Put the path of the AI model
+        # self.model = YOLO("/home/pi/geicar/PlaqueDetection/runs/detect/train7/weights/best.pt")  # Put the path of the AI model
         self.model = YOLO("/root/geicar/PlaqueDetection/runs/detect/train7/weights/best.pt")  # Put the path of the AI model
         self.get_logger().info("YOLOv8 first model loaded successfully!")
         
         # Load the YOLOv8 model for the plate detection
         self.model2 = YOLO("/root/geicar/CharacterDetection/runs/detect/train3/weights/best.pt")  # Put the path of the AI model
-        #self.model2 = YOLO("/home/pi/geicar/CharacterDetection/runs/detect/train3/weights/best.pt")  # Put the path of the AI model
+        # self.model2 = YOLO("/home/pi/geicar/CharacterDetection/runs/detect/train3/weights/best.pt")  # Put the path of the AI model
         self.get_logger().info("YOLOv8 second model loaded successfully!")
 
         # Subscribe to the camera topic
@@ -32,6 +32,13 @@ class PlateDetection(Node):
             Image,
             'image_raw',  # Topic of the camera 
             self.image_callback,
+            10
+        )
+        
+        self.sub2 = self.create_subscription(
+            NavSatFix,
+            '/gps/fix',  # Topic of the gps  
+            self.gps_callback,
             10
         )
 
@@ -67,6 +74,12 @@ class PlateDetection(Node):
             10
         )
         
+    def gps_callback(self, msg):
+        # Extract latitude and longitude from NavSatFix message
+        self.latitude = msg.latitude
+        self.longitude = msg.longitude
+        self.get_logger().info(f"Received GPS coordinates: {self.latitude}, {self.longitude}")
+    
     def image_callback(self, msg):
         try:
             # Convertion of the ROS message as an OpenCV image
@@ -128,7 +141,7 @@ class PlateDetection(Node):
                 
                 try:
                     plate_msg = String()
-                    plate_msg.data = plate_text
+                    plate_msg.data = f"Plate: {plate_text}, Latitude: {self.latitude}, Longitude: {self.longitude}"
                     self.pub_plate_text.publish(plate_msg)
                 except Exception as e:
                     self.get_logger().error(f"Failed to publish plate text: {e}")
