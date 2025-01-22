@@ -18,9 +18,9 @@ def generate_launch_description():
                 {'world_frame': 'odom'},
             ],
             remappings=[
-                ('/imu', '/imu/modified_frame_id'),
+                ('/imu', '/imu/gps_cal'),
                 ('/gps/fix', '/gps/fix'),
-                ('/odometry/filtered', '/odometry/localronan'),
+                ('/odometry/filtered', '/odom/gps_cal'),
                 ('/odometry/gps', '/odometry/gps'),
             ],
             arguments=[

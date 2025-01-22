@@ -23,6 +23,8 @@ setup(
             'mqtt_client = mqtt_client.mqtt_client_node:main',
             'odom_yaw_flip = mqtt_client.odom_yaw_flip_node:main',
             'generatepath = mqtt_client.generatepath_node:main',
+            'calibration_orientation = mqtt_client.calibration_orientation_node:main',
+            'imu_calibration = mqtt_client.imu_calibration_publisher_node:main',
         ],
     },
 )

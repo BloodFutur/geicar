@@ -32,7 +32,7 @@ public:
 
     x = 0.0;
     y = 0.0;
-    th = 0.0;
+    th = -0.4918 + 3.14159;
 
     current_time = this->get_clock()->now();
     last_time = this->get_clock()->now();
