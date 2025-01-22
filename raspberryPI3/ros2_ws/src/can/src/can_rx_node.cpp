@@ -155,6 +155,8 @@ private:
                 odom_y += v * std::sin(odom_theta) * dt;
                 odom_theta += omega * dt;
 
+
+
                 // Create the odometry message
                 auto odom_msg = nav_msgs::msg::Odometry();
                 odom_msg.header.stamp = this->get_clock()->now();
@@ -464,7 +466,7 @@ private:
     void resetOdometry(){
         odom_x = 0.0;
         odom_y = 0.0;
-        odom_theta = 0.0;
+        odom_theta = -0.491868659;
         last_time = this->now();
     }
 
