@@ -74,6 +74,9 @@ class PlateDetection(Node):
             10
         )
         
+        self.latitude = 0.0
+        self.longitude = 0.0
+        
     def gps_callback(self, msg):
         # Extract latitude and longitude from NavSatFix message
         self.latitude = msg.latitude
