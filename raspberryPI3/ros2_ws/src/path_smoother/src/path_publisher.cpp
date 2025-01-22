@@ -46,10 +46,10 @@ private:
             pose.pose.position.x = std::stod(row_data[0]);
             pose.pose.position.y = std::stod(row_data[1]);
             pose.pose.position.z = 0;
-            pose.pose.orientation.x = std::stod(row_data[3]);
-            pose.pose.orientation.y = std::stod(row_data[4]);
-            pose.pose.orientation.z = std::stod(row_data[5]);
-            pose.pose.orientation.w = std::stod(row_data[6]);
+            pose.pose.orientation.x = 0;
+            pose.pose.orientation.y = 0;
+            pose.pose.orientation.z = std::stod(row_data[2]);
+            pose.pose.orientation.w = std::stod(row_data[3]);
             path_.poses.push_back(pose);
             pose_count++; // Increment the counter
         }
