@@ -51,7 +51,7 @@ private:
 
     // pure pursuit parameter
     const double k = 0.1; // look forward gain
-    const double Lfc = 1.0; // [m] look-ahead distance
+    const double Lfc = 2.0; // [m] look-ahead distance
     // const double Lfc = 0.25; // [m] look-ahead distance
     const double Kp = 1.0; // speed proportional gain
     const double dt = 0.1; // [s] time tick
@@ -60,7 +60,8 @@ private:
     double minCurvature = 0.0001;
     double maxCurvature = 0.7;
     double minVelocity = 0.14915;
-    double maxVelocity = 0.4971;
+    // double maxVelocity = 0.4971;
+    double maxVelocity = 0.2;
 };
 
 #endif // PURE_PURSUIT_PLANNER_COMPONENT_HPP
