@@ -79,14 +79,23 @@ def generate_launch_description():
         }],
         emulate_tty=True
     )
+    # Verification Node
+    BufferingTestNode= Node(
+        package='usb_cam',  # name of the package where you can find the .py script of the buffering
+        executable='verification_node.py',  # Name of the Python file
+        name='TestingBufferNode',  # Name of the ROS node
+        emulate_tty=True
+    )
 
 
     ld.add_action(lidar_node)
-    ld.add_action(camera_node)
+    #ld.add_action(camera_node)
     ld.add_action(system_check_ack_node)
     #ld.add_action(plate_detection_node)
+    ld.add_action(BufferingTestNode)
     ld.add_action(BufferingNode)
     ld.add_action(PlateDetection)
     ld.add_action(VerificationNode)
+    ld.add_action(BufferingTestNode)
 
     return ld

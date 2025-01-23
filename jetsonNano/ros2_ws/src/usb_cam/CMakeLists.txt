@@ -55,6 +55,7 @@ install(
     scripts/verification_node.py 
     scripts/Tilt_Corrector.py 
     scripts/Segmentor.py
+    scripts/testing_buffer.py
     
   DESTINATION lib/${PROJECT_NAME})
 
