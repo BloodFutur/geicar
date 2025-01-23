@@ -18,7 +18,7 @@ class BufferingNode(Node):
 
         # Subscribes to raw images
         self.sub = self.create_subscription(
-            Image, 'raw_image', self.image_callback, 10
+            Image, 'raw_image_testing', self.image_callback, 10
         )
 
         # Publishes buffered images
