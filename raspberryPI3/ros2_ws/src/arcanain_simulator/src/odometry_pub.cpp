@@ -18,7 +18,7 @@ public:
   OdometryPublisher()
   : Node("odometry_pub")
   {
-    odom_pub = this->create_publisher<nav_msgs::msg::Odometry>("odom", 50);
+    odom_pub = this->create_publisher<nav_msgs::msg::Odometry>("odometry/globalronan", 50);
     path_pub = this->create_publisher<nav_msgs::msg::Path>("odom_path", 50);
     localmap_pub = this->create_publisher<nav_msgs::msg::OccupancyGrid>("local_map", 10);
     laser_range_pub = this->create_publisher<visualization_msgs::msg::Marker>(
