@@ -106,6 +106,12 @@ def generate_launch_description():
         emulate_tty=True
     )
 
+    calibration_imu_publisher_node = Node(
+        package="mqtt_client",
+        executable="imu_calibration",
+        output="screen"
+    )
+
     ld.add_action(mqtt_client_node)
     ld.add_action(joystick_node)
     ld.add_action(joystick_to_cmd_node)
@@ -120,5 +126,6 @@ def generate_launch_description():
     ld.add_action(sensor_fusion_launch)
     ld.add_action(path_publisher_node)
     ld.add_action(pure_pursuit_planner_node)
+    ld.add_action(calibration_imu_publisher_node)
     
     return ld
