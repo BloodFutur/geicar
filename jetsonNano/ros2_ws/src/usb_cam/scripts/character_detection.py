@@ -149,7 +149,7 @@ class PlateDetection(Node):
                         char_conf = char_box.conf[0]
                         char_id = char_box.cls[0]
                         char_label = self.model2.names[int(char_id)]  # only keep the character
-                        characters.append((cx1, char_label))  # put the character with x coordinate
+                        characters.append((cx1, char_label, char_conf))  # put the character with x coordinate
                         total_confidence += char_conf
                         
                         # Draw character bounding box (adjusted to the original image coordinates)
