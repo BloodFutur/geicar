@@ -36,7 +36,7 @@ class CharacterSegmentation:
             # Filter contours by Char_Dimensions
             if Char_Dimensions[0] < intWidth < Char_Dimensions[1] and Char_Dimensions[2] < intHeight < Char_Dimensions[3]:
                 x_cntr_list.append(intX)  # Store x-coordinate for sorting
-                char_copy = np.zeros((44, 24))
+                char_copy = np.zeros((44, 24),dtype=np.uint8)
 
                 # Extract character region and resize
                 char = img[intY:intY + intHeight, intX:intX + intWidth]
