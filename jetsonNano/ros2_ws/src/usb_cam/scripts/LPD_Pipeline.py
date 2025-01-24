@@ -128,7 +128,7 @@ class PlateDetection(Node):
                     char_img = (char_img * 255).astype('uint8') if char_img.dtype == 'float64' else char_img.astype('uint8')
                     ocr_result = self.reader.readtext(char_img, detail=0, allowlist="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
                     if ocr_result:
-                        extracted_text += ocr_result  
+                        extracted_text += ocr_result[0]  
             
                 # Step 5: Add extracted text to buffer
                     #self.detected_texts.append(extracted_text)
