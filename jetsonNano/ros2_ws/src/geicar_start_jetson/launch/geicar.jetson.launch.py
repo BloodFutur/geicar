@@ -58,7 +58,7 @@ def generate_launch_description():
         emulate_tty=True
     )
     # LPD Pipeline Node
-    PlateDetection= Node(
+    LPDPipelineNode= Node(
         package='usb_cam',  # name of the package where you can find the .py script of the buffering
         executable='LPD_Pipeline.py',  # Name of the Python file
         name='LPDPipelineNode',  # Name of the ROS node
@@ -91,7 +91,7 @@ def generate_launch_description():
     #ld.add_action(plate_detection_node)
     #ld.add_action(BufferingTestNode)
     #ld.add_action(BufferingNode)
-    ld.add_action(PlateDetection)
+    ld.add_action(LPDPipelineNode)
     #ld.add_action(VerificationNode)
 
     return ld

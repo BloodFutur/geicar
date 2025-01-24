@@ -163,14 +163,14 @@ class PlateDetection(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    plate_detection_node = PlateDetection()
+    LPDPipelineNode = PlateDetection()
 
     try:
-        rclpy.spin(plate_detection_node)
+        rclpy.spin(LPDPipelineNode)
     except KeyboardInterrupt:
         pass
 
-    plate_detection_node.destroy_node()
+    LPDPipelineNode.destroy_node()
     rclpy.shutdown()
 
 
