@@ -156,7 +156,10 @@ class PlateDetection(Node):
                     verified_text += char
                     break
         # Publish Verified text
-        self.pub_text.publish(verified_text)
+        msg = String()
+        msg.data = verified_text
+        self.pub_text.publish(msg)
+        
 
             
         
