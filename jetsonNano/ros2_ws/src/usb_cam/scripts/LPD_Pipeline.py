@@ -21,8 +21,8 @@ class PlateDetection(Node):
         self.bridge = CvBridge()
 
         # Load the YOLOv8 model
-        #self.model = YOLO("/root/geicar/PlaqueDetection/runs/detect/train7/weights/best.pt")
-        self.model=YOLO('/home/pi/geicar/PlaqueDetection/runs/detect/train7/weights/best.pt')
+        self.model = YOLO("/root/geicar/PlaqueDetection/runs/detect/train7/weights/best.pt")
+        #self.model=YOLO('/home/pi/geicar/PlaqueDetection/runs/detect/train7/weights/best.pt')
         self.get_logger().info("YOLOv8 model loaded successfully!")
 
         # Initialize EasyOCR
