@@ -77,8 +77,8 @@ class PlateDetection(Node):
         self.latitude = 0.0
         self.longitude = 0.0
         
-    def filter_duplicate_characters(detections, proximity_threshold=5):
-        detections.sort(key=lambda x: x[0])  # Sort every detected by x1
+    def filter_duplicate_characters(self, detections, proximity_threshold=5):
+        # detections.sort(key=lambda x: x[0])  # Sort every detected by x1
         filtered_detections = []
         previous_x1 = -float('inf')  # initialization of the variable with a very small value for the first iteration to be okay
 
@@ -157,7 +157,7 @@ class PlateDetection(Node):
                         cv2.putText(plate_roi, char_label, (x1 + cx1, y1 + cy1 - 5),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0), 1)
                         
-                # characters.sort(key=lambda x: x[0]) # fait dans la fonction filter_duplicate_characters
+                characters.sort(key=lambda x: x[0])  # fait dans la fonction filter_duplicate_characters
                 
                 characters = self.filter_duplicate_characters(characters)
                 plate_text = ''.join([char[1] for char in characters])
