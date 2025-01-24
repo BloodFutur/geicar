@@ -50,13 +50,17 @@ class PlateDetection(Node):
             Image,
             'image_raw',
             self.image_callback,
-            10
+            100
         )
 
         # Publishers
         self.pub_text = self.create_publisher(String, '/verified_text', 10) 
-        
-         
+        self.timer = self.create_timer(15.0, self.force_process_images)
+    def force_process_images(self):
+        if len(self.buffer) > 0:
+            self.get_logger().info("Processing images due to timeout.")
+            self.process_images()
+            self.buffer = []     
     def image_callback(self, image_msg):
         self.get_logger().info("Ready to process images")
         """Handles incoming images, buffers, and triggers processing."""
