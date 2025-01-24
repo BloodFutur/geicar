@@ -77,6 +77,22 @@ class PlateDetection(Node):
         self.latitude = 0.0
         self.longitude = 0.0
         
+    def filter_duplicate_characters(detections, proximity_threshold=5):
+        detections.sort(key=lambda x: x[0])  # Sort every detected by x1
+        filtered_detections = []
+        previous_x1 = -float('inf')  # initialization of the variable with a very small value for the first iteration to be okay
+
+        for x1, char, conf in detections:
+            if abs(x1 - previous_x1) > proximity_threshold:
+                filtered_detections.append((x1, char, conf))  # x1 coordinate, char is the detected character, conf is the confidence
+                previous_x1 = x1
+            else:
+                # Replace with higher confidence character
+                if conf > filtered_detections[-1][2]:
+                    filtered_detections[-1] = (x1, char, conf)  # last element of the list is changed with the one with the best confidence score
+        
+        return filtered_detections
+            
     def gps_callback(self, msg):
         # Extract latitude and longitude from NavSatFix message
         self.latitude = msg.latitude
@@ -122,8 +138,10 @@ class PlateDetection(Node):
                 plate_roi = frame[y1:y2, x1:x2]
 
                 # Character detection on the extracted plate
-                char_results = self.model2(plate_roi)
-                characters = []    
+                # char_results = self.model2(plate_roi)
+                char_results = self.model2(plate_roi, conf=0.3, iou=0.4)
+                characters = []
+                total_confidence = 0.0
                 
                 for char_result in char_results:
                     for char_box in char_result.boxes:
@@ -132,19 +150,22 @@ class PlateDetection(Node):
                         char_id = char_box.cls[0]
                         char_label = self.model2.names[int(char_id)]  # only keep the character
                         characters.append((cx1, char_label))  # put the character with x coordinate
+                        total_confidence += char_conf
                         
                         # Draw character bounding box (adjusted to the original image coordinates)
                         cv2.rectangle(plate_roi, (x1 + cx1, y1 + cy1), (x1 + cx2, y1 + cy2), (255, 0, 0), 1)
                         cv2.putText(plate_roi, char_label, (x1 + cx1, y1 + cy1 - 5),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0), 1)
                         
-                characters.sort(key=lambda x: x[0])
+                # characters.sort(key=lambda x: x[0]) # fait dans la fonction filter_duplicate_characters
+                
+                characters = self.filter_duplicate_characters(characters)
                 plate_text = ''.join([char[1] for char in characters])
                 self.get_logger().info(f"Detected Plate: {plate_text}")
                 
                 try:
                     plate_msg = String()
-                    plate_msg.data = f"Plate: {plate_text}, Latitude: {self.latitude}, Longitude: {self.longitude}"
+                    plate_msg.data = f"Plate: {plate_text}, Latitude: {self.latitude}, Longitude: {self.longitude}, Confidence Sum: {total_confidence:.2f}"
                     self.pub_plate_text.publish(plate_msg)
                 except Exception as e:
                     self.get_logger().error(f"Failed to publish plate text: {e}")
