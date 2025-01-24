@@ -117,14 +117,15 @@ class PlateDetection(Node):
                 LP_BB = [[x1, y1], [x2, y1], [x2, y2], [x1, y2]]
                 rotator = Rotator(LP_BB, cropped_plate)
                 rotated_plate = rotator.rotate_image()
-
+                self.get_logger().info("Tilt corrected")
                 # Step 3: Character segmentation
                 segmentor = CharacterSegmentation()
                 char_list = segmentor.segment_characters(rotated_plate)
-
+                self.get_logger().info("Segmentation done")
                 # Step 4: Text Recognition
                 extracted_text = ""
                 for char_img in char_list:
+                    char_img = (char_img * 255).astype('uint8') if char_img.dtype == 'float64' else char_img.astype('uint8')
                     ocr_result = self.reader.readtext(char_img, detail=0, allowlist="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
                     if ocr_result:
                         extracted_text += ocr_result[0]  
