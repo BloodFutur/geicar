@@ -101,7 +101,7 @@ class Rotator:
         left, right = self.find_bottom_coordinates()
         theta = self.calculate_rotation_angle(left, right)
 
-        Cropped_LP = cv2.imread(self.cropped_output_path)
+        Cropped_LP = self.cropped_output_path
         if Cropped_LP is None:
             raise FileNotFoundError(f"Image not found at path: {self.cropped_output_path}")
 
