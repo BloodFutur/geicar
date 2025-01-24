@@ -48,17 +48,18 @@ rclcpp_components_register_node(${PROJECT_NAME}_node
 
 install(
   PROGRAMS 
-    scripts/show_image.py 
-    scripts/plate_detection.py 
-    scripts/buffer_node.py 
-    scripts/LPD_Pipeline.py 
-    scripts/verification_node.py 
+    scripts/show_image.py  
+    scripts/LPD_Pipeline.py  
     scripts/Tilt_Corrector.py 
     scripts/Segmentor.py
     scripts/testing_buffer.py
     
   DESTINATION lib/${PROJECT_NAME})
-
+install(
+    DIRECTORY
+      scripts/testing_images  
+    DESTINATION share/${PROJECT_NAME}/scripts)
+    
 ament_auto_package(
   INSTALL_TO_SHARE
     launch

@@ -6,6 +6,7 @@ from collections import deque
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import time
+from std_msgs.msg import String
 
 class BufferingNode(Node):
     def __init__(self):
@@ -20,9 +21,17 @@ class BufferingNode(Node):
         self.sub = self.create_subscription(
             Image, 'raw_image_testing', self.image_callback, 10
         )
+        #Subscribes to reset signal:
+        self.signal_sub = self.create_subscription(
+            String, 'Reset_signal', self.reset_callback, 10
+        )
 
         # Publishes buffered images
         self.pub = self.create_publisher(Image, 'buffered_images', 10)
+    def reset_callback(self, msg):
+        if msg.data == "RESET":
+            self.get_logger().info("Reset signal received. Resetting the buffer.")
+            self.buffer.clear()
 
     def image_callback(self, msg):
         """Callback to buffer incoming images."""

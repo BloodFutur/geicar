@@ -17,6 +17,7 @@ class VerificationNode(Node):
 
         # Publish verified text
         self.pub = self.create_publisher(String, 'verified_text', 10)
+        self.signal_pub = self.create_publisher(String, 'Reset_signal', 10)
 
     def text_callback(self, msg):
         """Buffer detected texts and validate when full."""
@@ -61,6 +62,7 @@ class VerificationNode(Node):
         """Publish the verified text."""
         self.pub.publish(String(data=text))
         self.get_logger().info(f"Verified Text: {text}")
+        self.signal_pub.publish(String(data="RESET"))
 
 def main(args=None):
     rclpy.init(args=args)
