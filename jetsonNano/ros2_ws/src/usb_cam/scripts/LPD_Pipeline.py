@@ -82,7 +82,7 @@ class PlateDetection(Node):
         # Extract latitude and longitude from NavSatFix message
         self.latitude = msg.latitude
         self.longitude = msg.longitude
-        self.get_logger().info(f"Received GPS coordinates: {self.latitude}, {self.longitude}")
+        #self.get_logger().info(f"Received GPS coordinates: {self.latitude}, {self.longitude}")
     
     
     def image_callback(self, image_msg):
@@ -127,41 +127,42 @@ class PlateDetection(Node):
         confidence=[]
         detected_texts = [] #Buffer for detected texts to verify 
         confidences=[] # Buffer for detected texts confidences
-        # Step 1: Detection and extraction of the ROI
-        results = self.model(image)
-        if len(results) > 0 and len(results[0].boxes) > 0:
-            box = results[0].boxes[0]  # First bounding box
-            x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box coordinates
+        for image in self.buffer:
+            # Step 1: Detection and extraction of the ROI
+            results = self.model(image)
+            if len(results) > 0 and len(results[0].boxes) > 0:
+                box = results[0].boxes[0]  # First bounding box
+                x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box coordinates
 
-            # Crop license plate from the image
-            cropped_plate = image[y1:y2, x1:x2]
-            self.get_logger().info(f"License plate detected and cropped.")
+                # Crop license plate from the image
+                cropped_plate = image[y1:y2, x1:x2]
+                self.get_logger().info(f"License plate detected and cropped.")
         
 
-            # Step 2: Tilt correction
-            LP_BB = [[x1, y1], [x2, y1], [x2, y2], [x1, y2]]
-            rotator = Rotator(LP_BB, cropped_plate)
-            rotated_plate = rotator.rotate_image()
-            self.get_logger().info("Tilt corrected")
-            # Step 3: Character segmentation
-            segmentor = CharacterSegmentation()
-            char_list = segmentor.segment_characters(rotated_plate)
-            self.get_logger().info("Segmentation done")
-            # Step 4: Text Recognition
-            extracted_text = ""
-            for char_img in char_list:
-                ocr_result = self.reader.readtext(char_img, detail=1, allowlist="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-                if ocr_result:
-                    extracted_text += ocr_result[0][1]  
-                    confidence.append(ocr_result[0][2])
-            self.get_logger().info(f"Extracted Text: {extracted_text}")
-        else:
-            self.get_logger().info("No license plate detected.")
-            extracted_text="0000000"
-            confidence=[0,0,0,0,0,0,0]
-        detected_texts.append(extracted_text)
-        confidences.append(confidence)
-        # Verify text: 
+                # Step 2: Tilt correction
+                LP_BB = [[x1, y1], [x2, y1], [x2, y2], [x1, y2]]
+                rotator = Rotator(LP_BB, cropped_plate)
+                rotated_plate = rotator.rotate_image()
+                self.get_logger().info("Tilt corrected")
+                # Step 3: Character segmentation
+                segmentor = CharacterSegmentation()
+                char_list = segmentor.segment_characters(rotated_plate)
+                self.get_logger().info("Segmentation done")
+                # Step 4: Text Recognition
+                extracted_text = ""
+                for char_img in char_list:
+                    ocr_result = self.reader.readtext(char_img, detail=1, allowlist="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+                    if ocr_result:
+                        extracted_text += ocr_result[0][1]  
+                        confidence.append(ocr_result[0][2])
+                self.get_logger().info(f"Extracted Text: {extracted_text}")
+            else:
+                self.get_logger().info("No license plate detected.")
+                extracted_text="0000000"
+                confidence=[0,0,0,0,0,0,0]
+            detected_texts.append(extracted_text)
+            confidences.append(confidence)
+            # Verify text: 
         verified_text=self.verify_text(detected_texts,confidences)
         # Publish Results
         self.get_logger().info(f"Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}")
