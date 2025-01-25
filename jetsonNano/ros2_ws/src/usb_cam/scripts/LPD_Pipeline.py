@@ -13,6 +13,9 @@ from Tilt_Corrector import Rotator  # Import Tilt Correction
 from Segmentor import CharacterSegmentation  # Import Character Segmentation
 import easyocr  # For OCR
 import torch
+import re
+from collections import defaultdict
+
 
 class PlateDetection(Node):
     def __init__(self):
@@ -87,11 +90,12 @@ class PlateDetection(Node):
         """Handles incoming images, buffers, and triggers processing."""
         self.frame_count += 1
 
+        detected_texts = [] #Buffer for detected texts to verify 
+        confidences=[] # Buffer for detected texts confidences 
         # Skip frames to sample every N frames
         if self.frame_count % self.frame_skip != 0:
             return
-
-        # Convert ROS Image to OpenCV format
+        
         try:
         # Convert ROS image message to OpenCV image
             frame = self.bridge.imgmsg_to_cv2(image_msg, desired_encoding='bgr8')
@@ -102,13 +106,22 @@ class PlateDetection(Node):
         # Add the image to the buffer
         self.buffer.append(frame)
         self.get_logger().info(f"Buffered image {len(self.buffer)}/{self.max_buffer_size}")
-
-        # If buffer is full, process the images
+        # Process the added image 
+        detected_text,confidence=self.process_images(frame)
+        detected_texts.append(detected_text)
+        confidences.append(confidence)
+        # Verify text: 
+        verified_text=self.verify_text(detected_texts,confidences)
+        # Publish Results
+        self.get_logger().info("Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}")
+        msg = String()
+        msg.data = f"Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}"
+        self.pub_text.publish(msg)
+        # If buffer is full, clear the buffer 
         if len(self.buffer) == self.max_buffer_size:
-            self.process_images()
             self.buffer = []  # Clear the buffer for the next batch
             
-    def process_images(self):
+    def process_images(self,image):
 
         """
         License Plate Detection Pipeline: 
@@ -121,71 +134,93 @@ class PlateDetection(Node):
         Input: Frame
         Output: Detected Text 
         """
-        detected_texts = []
-        for image in self.buffer:
-            # Step 1: Detection and extraction of the ROI
-            results = self.model(image)
-            if len(results) > 0 and len(results[0].boxes) > 0:
-                box = results[0].boxes[0]  # First bounding box
-                x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box coordinates
 
-                # Crop license plate from the image
-                cropped_plate = image[y1:y2, x1:x2]
-                self.get_logger().info(f"License plate detected and cropped.")
+        # Initialization of the list for confidnece scores:
+        confidence=[]
+        # Step 1: Detection and extraction of the ROI
+        results = self.model(image)
+        if len(results) > 0 and len(results[0].boxes) > 0:
+            box = results[0].boxes[0]  # First bounding box
+            x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box coordinates
+
+            # Crop license plate from the image
+            cropped_plate = image[y1:y2, x1:x2]
+            self.get_logger().info(f"License plate detected and cropped.")
         
 
-                # Step 2: Tilt correction
-                LP_BB = [[x1, y1], [x2, y1], [x2, y2], [x1, y2]]
-                rotator = Rotator(LP_BB, cropped_plate)
-                rotated_plate = rotator.rotate_image()
-                self.get_logger().info("Tilt corrected")
-                # Step 3: Character segmentation
-                segmentor = CharacterSegmentation()
-                char_list = segmentor.segment_characters(rotated_plate)
-                self.get_logger().info("Segmentation done")
-                # Step 4: Text Recognition
-                extracted_text = ""
-                for char_img in char_list:
-                    #char_img = (char_img * 255).astype('uint8') if char_img.dtype == 'float64' else char_img.astype('uint8')
-                    ocr_result = self.reader.readtext(char_img, detail=0, allowlist="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-                    if ocr_result:
-                        extracted_text += ocr_result[0]  
+            # Step 2: Tilt correction
+            LP_BB = [[x1, y1], [x2, y1], [x2, y2], [x1, y2]]
+            rotator = Rotator(LP_BB, cropped_plate)
+            rotated_plate = rotator.rotate_image()
+            self.get_logger().info("Tilt corrected")
+            # Step 3: Character segmentation
+            segmentor = CharacterSegmentation()
+            char_list = segmentor.segment_characters(rotated_plate)
+            self.get_logger().info("Segmentation done")
+            # Step 4: Text Recognition
+            extracted_text = ""
+            for char_img in char_list:
+                ocr_result = self.reader.readtext(char_img, detail=1, allowlist="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+                if ocr_result:
+                    extracted_text += ocr_result[1]  
+                    confidence.append(ocr_result[2])
+            self.get_logger().info(f"Extracted Text: {extracted_text}")
+        else:
+            self.get_logger().info("No license plate detected.")
+            extracted_text="0000000"
+            confidence=[0,0,0,0,0,0,0]
+        return extracted_text,confidence    
             
-                # Step 5: Add extracted text to buffer
-                    #self.detected_texts.append(extracted_text)
-                self.get_logger().info(f"Extracted Text: {extracted_text}")
-                detected_texts.append(extracted_text)
-                
+    def validate_plate(plate):
+        # Regex for current French license plate format (AA123AA)
+        plate_format = re.compile(r"^[A-Z]{2}\d{3}[A-Z]{2}$")
+        return bool(plate_format.match(plate))
+    
+    def verify_text(self,detected_texts, confidences):
+        # Step 1: Pre-process detected texts 
+        preprocessed_texts = []
+        for text in detected_texts:
+            # Remove all characters except ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789
+            cleaned_text = re.sub(r"[^A-Z0-9]", "", text.upper())
+            preprocessed_texts.append(cleaned_text)
+    
+        # Step 2: Extract valid substrings of license plates from the detected text length 7 
+        valid_substrings = []
+        for text in preprocessed_texts:
+            # Look for all substrings of length 7 matching the valid format
+            matches = re.findall(r"[A-Z]{2}\d{3}[A-Z]{2}", text)
+            valid_substrings.extend(matches)
+    
+        # Step 3: Initialize weighted scores for each position
+        plate_length = 7
+        weighted_scores = [defaultdict(float) for _ in range(plate_length)]
+    
+        # Step 4: Apply weighted voting for valid substrings
+        for text, conf in zip(valid_substrings, confidences):
+            for i, char in enumerate(text):
+                if i in [0, 1, 5, 6]:  # Positions of letters in the license plate 
+                    if char.isalpha():
+                        weighted_scores[i][char] += conf[i]
+                elif i in [2, 3, 4]:  # Positions of numbers in the license plate
+                    if char.isdigit():
+                        weighted_scores[i][char] += conf[i]
+    
+        # Step 5: Construct the verified plate from weighted scores
+        verified_text = ""
+        for char_scores in weighted_scores:
+            if char_scores:
+                verified_text += max(char_scores, key=char_scores.get)  # Select character with highest score
             else:
-                self.get_logger().info("No license plate detected.")
-                detected_texts.append("0000000")
-        # Verify the text
-        verified_text=""
-        max_len = max(len(text) for text in detected_texts)
-        # Iterate over each character position
-        for char_pos in range(max_len):
-            char_count = {}
-            # Count occurrences of each character at the current position
-            for text in detected_texts:
-                if char_pos < len(text):
-                    char = text[char_pos]
-                    char_count[char] = char_count.get(char, 0) + 1
+                verified_text += "_"  # Placeholder for missing positions
+    
+        # Step 6: Validate the final text
+        if self.validate_plate(verified_text):
+            return verified_text
+        else:
+            return "INVALID"
 
-            # Validate character appearing in at least 70% of texts in the same position
-            threshold = len(detected_texts) * 0.7
-            for char, count in char_count.items():
-                if count >= threshold:
-                    verified_text += char
-                    break
-        # Publish Verified text
-        self.get_logger().info("Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}")
-        msg = String()
-        msg.data = f"Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}"
-        self.pub_text.publish(msg)
-        
 
-            
-        
+
 
 def main(args=None):
     rclpy.init(args=args)
