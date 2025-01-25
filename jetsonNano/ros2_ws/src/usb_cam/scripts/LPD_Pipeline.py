@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, NavSatFix
 from std_msgs.msg import String
 from cv_bridge import CvBridge
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
@@ -36,8 +36,10 @@ class PlateDetection(Node):
         # Initilize local variables
         self.buffer = []
         self.max_buffer_size = 10
-        self.frame_skip = 5  # Sample every 2rd frame
+        self.frame_skip = 5  # Sample every 5th frame
         self.frame_count = 0
+        self.latitude = 0.0
+        self.longitude = 0.0
         # Create a Quality of Service (QoS) profile for the subscriber
         """
         The QoSProfile configuration defines the behavior of message delivery and storage for the topic subscription. 
@@ -56,15 +58,30 @@ class PlateDetection(Node):
             self.image_callback,
             100
         )
-
+        # Subscription to gps topic
+        self.sub2 = self.create_subscription(
+            NavSatFix,
+            '/gps/fix',  # Topic of the gps  
+            self.gps_callback,
+            10
+        )
         # Publishers
         self.pub_text = self.create_publisher(String, '/verified_text', 10) 
         self.timer = self.create_timer(15.0, self.force_process_images)
+
+    #Timeout check     
     def force_process_images(self):
         if len(self.buffer) > 0:
             self.get_logger().info("Processing images due to timeout.")
             self.process_images()
             self.buffer = []     
+    def gps_callback(self, msg):
+        # Extract latitude and longitude from NavSatFix message
+        self.latitude = msg.latitude
+        self.longitude = msg.longitude
+        self.get_logger().info(f"Received GPS coordinates: {self.latitude}, {self.longitude}")
+    
+    
     def image_callback(self, image_msg):
         self.get_logger().info("Ready to process images")
         """Handles incoming images, buffers, and triggers processing."""
@@ -161,9 +178,9 @@ class PlateDetection(Node):
                     verified_text += char
                     break
         # Publish Verified text
-        self.get_logger().info(f"Verified Extracted Text:{verified_text}" )
+        self.get_logger().info("Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}")
         msg = String()
-        msg.data = verified_text
+        msg.data = f"Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}"
         self.pub_text.publish(msg)
         
 
