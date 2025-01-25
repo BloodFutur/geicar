@@ -162,8 +162,8 @@ class PlateDetection(Node):
             for char_img in char_list:
                 ocr_result = self.reader.readtext(char_img, detail=1, allowlist="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
                 if ocr_result:
-                    extracted_text += ocr_result[1]  
-                    confidence.append(ocr_result[2])
+                    extracted_text += ocr_result[0][1]  
+                    confidence.append(ocr_result[0][2])
             self.get_logger().info(f"Extracted Text: {extracted_text}")
         else:
             self.get_logger().info("No license plate detected.")
