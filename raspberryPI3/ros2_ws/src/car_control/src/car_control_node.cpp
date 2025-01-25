@@ -139,7 +139,7 @@ private:
         double v = cmd_vel.linear.x;   
         double omega = -cmd_vel.angular.z;
 
-        if (abs(omega) <= 0.3) {this->angular_speed = omega;}
+        if (abs(omega) <= 0.25) {this->angular_speed = omega;}
         else {omega = this->angular_speed;}
         
         double steering_angle = 50.0;
