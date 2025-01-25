@@ -107,16 +107,19 @@ class PlateDetection(Node):
         self.buffer.append(frame)
         self.get_logger().info(f"Buffered image {len(self.buffer)}/{self.max_buffer_size}")
         # Process the added image 
-        detected_text,confidence=self.process_images(frame)
-        detected_texts.append(detected_text)
-        confidences.append(confidence)
-        # Verify text: 
-        verified_text=self.verify_text(detected_texts,confidences)
-        # Publish Results
-        self.get_logger().info("Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}")
-        msg = String()
-        msg.data = f"Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}"
-        self.pub_text.publish(msg)
+        if frame:
+            detected_text,confidence=self.process_images(frame)
+            detected_texts.append(detected_text)
+            confidences.append(confidence)
+            # Verify text: 
+            verified_text=self.verify_text(detected_texts,confidences)
+            # Publish Results
+            self.get_logger().info(f"Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}")
+            msg = String()
+            msg.data = f"Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}"
+            self.pub_text.publish(msg)
+        else: 
+            return
         # If buffer is full, clear the buffer 
         if len(self.buffer) == self.max_buffer_size:
             self.buffer = []  # Clear the buffer for the next batch
