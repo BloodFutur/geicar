@@ -111,7 +111,7 @@ class PlateDetection(Node):
         detected_texts.append(detected_text)
         confidences.append(confidence)
         # Verify text: 
-        verified_text=self.verify_text(detected_texts,confidences)
+        verified_text=self.verify_text(self,detected_texts,confidences)
         # Publish Results
         self.get_logger().info("Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}")
         msg = String()
