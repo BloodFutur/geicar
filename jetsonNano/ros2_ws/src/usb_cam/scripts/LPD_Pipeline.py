@@ -39,6 +39,7 @@ class PlateDetection(Node):
         # Initilize local variables
         self.buffer = []
         self.max_buffer_size = 10
+        self.isbuffering=False
         self.frame_skip = 2  # Sample every 5th frame
         self.frame_count = 0
         self.latitude = 0.0
@@ -78,6 +79,7 @@ class PlateDetection(Node):
             self.get_logger().info("Processing images due to timeout.")
             self.process_images()
             self.buffer = []     
+            self.isbuffering=False #Reset flag
     def gps_callback(self, msg):
         # Extract latitude and longitude from NavSatFix message
         self.latitude = msg.latitude
@@ -95,21 +97,26 @@ class PlateDetection(Node):
         except Exception as e:
             self.get_logger().error(f"Failed to convert image: {e}")
             return
-        results = self.model(frame)
-        if len(results) > 0 and len(results[0].boxes) > 0:
+        if not self.isbuffering: 
+            results = self.model(frame)
+            if len(results) > 0 and len(results[0].boxes) > 0:
+                self.isbuffering= True
+                self.frame_count = 0 
+                self.get_logger().info(f"License plate detected started buffering.")
+                self.buffer.append(frame)
         # Add the image to the buffer
-            self.get_logger().info(f"License plate detected started buffering.")
+        else:     
             self.frame_count += 1
- 
         # Skip frames to sample every N frames
-            if self.frame_count % self.frame_skip != 0:
-                return
-            self.buffer.append(frame)
-            self.get_logger().info(f"Buffered image {len(self.buffer)}/{self.max_buffer_size}")
+            if self.frame_count % self.frame_skip == 0:
+                
+                self.buffer.append(frame)
+                self.get_logger().info(f"Buffered image {len(self.buffer)}/{self.max_buffer_size}")
             # If buffer is full, clear the buffer 
             if len(self.buffer) == self.max_buffer_size:
                 self.process_images()
                 self.buffer = []  # Clear the buffer for the next batch
+                self.isbuffering=False # Flag at 0
             
     def process_images(self):
 
