@@ -16,7 +16,7 @@
 #define SPEED_ERR_THRESHOLD 1.0
 #define WHEEL_BASE 0.55             //0.55m
 #define WHEEL_RADIUS 0.095          //0.095m
-#define ANGLE_MAX 0.523             //30°
+#define ANGLE_MAX 0.8             //50°
 #define MAX_PWM_MOTOR 100
 #define MIN_PWM_MOTOR 10
 
