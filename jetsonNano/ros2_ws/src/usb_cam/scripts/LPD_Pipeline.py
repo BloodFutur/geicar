@@ -171,7 +171,7 @@ class PlateDetection(Node):
             confidence=[0,0,0,0,0,0,0]
         return extracted_text,confidence    
             
-    def validate_plate(plate):
+    def validate_plate(self,plate):
         # Regex for current French license plate format (AA123AA)
         plate_format = re.compile(r"^[A-Z]{2}\d{3}[A-Z]{2}$")
         return bool(plate_format.match(plate))
@@ -211,7 +211,7 @@ class PlateDetection(Node):
             if char_scores:
                 verified_text += max(char_scores, key=char_scores.get)  # Select character with highest score
             else:
-                verified_text += "_"  # Placeholder for missing positions
+                verified_text += "_"  # Placeholder for missin<g positions
     
         # Step 6: Validate the final text
         if self.validate_plate(verified_text):
