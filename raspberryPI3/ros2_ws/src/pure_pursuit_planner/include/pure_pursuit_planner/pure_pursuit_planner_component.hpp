@@ -10,6 +10,7 @@
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tf2_ros/static_transform_broadcaster.h"
 #include "tf2_ros/transform_broadcaster.h"
+#include "std_msgs/msg/bool.hpp"
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -41,9 +42,11 @@ private:
     void publishCmd(double v, double w);
     void publish_demo_cmd();
     bool load_message(const std::string &filename);
+    void autonomous_mode_callback(const std_msgs::msg::Bool::SharedPtr msg);
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub;
     rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr cmd_vel_rviz_pub;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub;
+    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr autonomous_mode_sub;
     rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_sub;
     rclcpp::TimerBase::SharedPtr timer;
     std::vector<std::vector<std::string>> csv_data_;
@@ -53,6 +56,7 @@ private:
     int oldNearestPointIndex;
     double target_vel;
     double current_vel;
+    bool autonomous_mode;
 
     // check goal dist
     double goal_threshold = 0.1; //[m]

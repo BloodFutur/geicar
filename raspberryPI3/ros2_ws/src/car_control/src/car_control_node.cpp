@@ -50,6 +50,7 @@ public:
 
         publisher_steeringCalibration_ = this->create_publisher<interfaces::msg::SteeringCalibration>("steering_calibration", 10);
 
+        publisher_autonomous_mode_ = this->create_publisher<std_msgs::msg::Bool>("autonomous_mode", 10);
         
 
         subscription_joystick_order_ = this->create_subscription<interfaces::msg::JoystickOrder>(
@@ -161,7 +162,7 @@ private:
     * - currentAngle [from motors feedback]
     */
     void updateCmd(){
-
+        auto msg = std_msgs::msg::Bool();
         auto motorsOrder = interfaces::msg::MotorsOrder();
 
         if (!start){    //Car stopped
@@ -171,9 +172,9 @@ private:
 
 
         }else{ //Car started
-
             //Manual Mode
             if (mode==0){
+                msg.data = false;
                 
                 manualPropulsionCmd(requestedThrottle, reverse, leftRearPwmCmd,rightRearPwmCmd);
 
@@ -183,6 +184,8 @@ private:
             //Autonomous Mode
             } else if (mode==1){
                 if (!this->obstacle_detected){
+                    msg.data = true;
+
                     // updateSpeedCmd();
                     
                     // RCLCPP_DEBUG(this->get_logger(), "leftSpeedCmd : %f", leftSpeedCmd);
@@ -199,14 +202,16 @@ private:
                     leftRearPwmCmd = STOP;
                     rightRearPwmCmd = STOP;
                     steeringPwmCmd = STOP;
-                } 
+                }
             }
+
         }
 
         //Send order to motors
         motorsOrder.left_rear_pwm = leftRearPwmCmd;
         motorsOrder.right_rear_pwm = rightRearPwmCmd; 
         motorsOrder.steering_pwm = steeringPwmCmd;
+        publisher_autonomous_mode_->publish(msg);
         publisher_can_->publish(motorsOrder);
     }
 
@@ -371,6 +376,7 @@ private:
     //Publishers
     rclcpp::Publisher<interfaces::msg::MotorsOrder>::SharedPtr publisher_can_;
     rclcpp::Publisher<interfaces::msg::SteeringCalibration>::SharedPtr publisher_steeringCalibration_;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_autonomous_mode_;
 
     //Subscribers
     rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscription_joystick_order_;

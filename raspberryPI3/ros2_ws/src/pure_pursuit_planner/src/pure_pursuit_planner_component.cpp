@@ -10,6 +10,7 @@ PurePursuitNode::PurePursuitNode()
     target_ind = 0;
     oldNearestPointIndex = -1;
     current_index_ = -1;
+    autonomous_mode = false;
 
     // Publisher
     cmd_vel_pub = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
@@ -21,6 +22,9 @@ PurePursuitNode::PurePursuitNode()
     path_sub = this->create_subscription<nav_msgs::msg::Path>(
             "path", 20,
             std::bind(&PurePursuitNode::path_callback, this, std::placeholders::_1));
+    autonomous_mode_sub = this->create_subscription<std_msgs::msg::Bool>(
+            "autonomous_mode", 10,
+            std::bind(&PurePursuitNode::autonomous_mode_callback, this, std::placeholders::_1));
     
     // Load CSV data
     if (!load_message("cmd_vel_demo.csv")) {
@@ -36,12 +40,10 @@ PurePursuitNode::PurePursuitNode()
 
 void PurePursuitNode::updateControl() {
     //Ajout 
-    if (path_subscribe_flag && current_index_ != -1) {
+    if (path_subscribe_flag && current_index_ != -1 && autonomous_mode) {
         // auto [v, w] = purePursuitControl(target_ind);
         // publishCmd(v, w);
-        publish_demo_cmd();
-    } else {
-        RCLCPP_WARN(this->get_logger(), "Path data not available yet.");
+        publish_demo_cmd();    
     }
 }
 
@@ -148,6 +150,11 @@ void PurePursuitNode::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr
 
     // Ajout
     // RCLCPP_INFO(this->get_logger(), "Odom received: x=%f, y=%f, yaw=%f", x, y, yaw);
+}
+
+void PurePursuitNode::autonomous_mode_callback(const std_msgs::msg::Bool::SharedPtr msg) {
+    autonomous_mode = msg->data;
+    RCLCPP_INFO(this->get_logger(), "Autonomous mode: %s", autonomous_mode ? "true" : "false");
 }
 
 void PurePursuitNode::path_callback(const nav_msgs::msg::Path::SharedPtr msg) {
