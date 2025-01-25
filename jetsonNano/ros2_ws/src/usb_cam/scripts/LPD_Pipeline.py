@@ -39,7 +39,7 @@ class PlateDetection(Node):
         # Initilize local variables
         self.buffer = []
         self.max_buffer_size = 10
-        self.frame_skip = 4  # Sample every 5th frame
+        self.frame_skip = 3  # Sample every 5th frame
         self.frame_count = 0
         self.latitude = 0.0
         self.longitude = 0.0
@@ -104,14 +104,12 @@ class PlateDetection(Node):
         # Add the image to the buffer
         self.buffer.append(frame)
         self.get_logger().info(f"Buffered image {len(self.buffer)}/{self.max_buffer_size}")
-        # Process the added image 
-        for image in self.buffer: 
-            self.process_images(image)
         # If buffer is full, clear the buffer 
         if len(self.buffer) == self.max_buffer_size:
+            self.process_images()
             self.buffer = []  # Clear the buffer for the next batch
             
-    def process_images(self,image):
+    def process_images(self):
 
         """
         License Plate Detection Pipeline: 
