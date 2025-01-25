@@ -12,6 +12,7 @@ from ultralytics import YOLO  # YOLOv8 for detection
 from Tilt_Corrector import Rotator  # Import Tilt Correction
 from Segmentor import CharacterSegmentation  # Import Character Segmentation
 import easyocr  # For OCR
+import torch
 
 class PlateDetection(Node):
     def __init__(self):
@@ -19,14 +20,17 @@ class PlateDetection(Node):
 
         # CvBridge for the conversion between ROS and OpenCV
         self.bridge = CvBridge()
-
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         # Load the YOLOv8 model
         self.model = YOLO("/root/geicar/PlaqueDetection/runs/detect/train7/weights/best.pt")
+        # Move the model to the GPU
+        self.model.to(device)
+
         #self.model=YOLO('/home/pi/geicar/PlaqueDetection/runs/detect/train7/weights/best.pt')
         self.get_logger().info("YOLOv8 model loaded successfully!")
 
         # Initialize EasyOCR
-        self.reader = easyocr.Reader(['en'])
+        self.reader = easyocr.Reader(['en'],gpu=True)
         self.get_logger().info("EasyOCR loaded and initialized successfully!")
 
         # Initilize local variables
@@ -157,6 +161,7 @@ class PlateDetection(Node):
                     verified_text += char
                     break
         # Publish Verified text
+        self.get_logger().info(f"Verified Extracted Text:{verified_text}" )
         msg = String()
         msg.data = verified_text
         self.pub_text.publish(msg)
