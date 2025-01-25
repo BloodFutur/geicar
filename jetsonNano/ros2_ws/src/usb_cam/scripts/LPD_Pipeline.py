@@ -32,7 +32,7 @@ class PlateDetection(Node):
         # Initilize local variables
         self.buffer = []
         self.max_buffer_size = 10
-        self.frame_skip = 2  # Sample every 2rd frame
+        self.frame_skip = 5  # Sample every 2rd frame
         self.frame_count = 0
         # Create a Quality of Service (QoS) profile for the subscriber
         """
