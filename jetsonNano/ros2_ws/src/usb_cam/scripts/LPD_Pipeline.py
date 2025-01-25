@@ -39,7 +39,7 @@ class PlateDetection(Node):
         # Initilize local variables
         self.buffer = []
         self.max_buffer_size = 10
-        self.frame_skip = 5  # Sample every 5th frame
+        self.frame_skip = 4  # Sample every 5th frame
         self.frame_count = 0
         self.latitude = 0.0
         self.longitude = 0.0
@@ -89,9 +89,7 @@ class PlateDetection(Node):
         self.get_logger().info("Ready to process images")
         """Handles incoming images, buffers, and triggers processing."""
         self.frame_count += 1
-
-        detected_texts = [] #Buffer for detected texts to verify 
-        confidences=[] # Buffer for detected texts confidences 
+ 
         # Skip frames to sample every N frames
         if self.frame_count % self.frame_skip != 0:
             return
@@ -107,19 +105,8 @@ class PlateDetection(Node):
         self.buffer.append(frame)
         self.get_logger().info(f"Buffered image {len(self.buffer)}/{self.max_buffer_size}")
         # Process the added image 
-        if frame:
-            detected_text,confidence=self.process_images(frame)
-            detected_texts.append(detected_text)
-            confidences.append(confidence)
-            # Verify text: 
-            verified_text=self.verify_text(detected_texts,confidences)
-            # Publish Results
-            self.get_logger().info(f"Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}")
-            msg = String()
-            msg.data = f"Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}"
-            self.pub_text.publish(msg)
-        else: 
-            return
+        for image in self.buffer: 
+            self.process_images(image)
         # If buffer is full, clear the buffer 
         if len(self.buffer) == self.max_buffer_size:
             self.buffer = []  # Clear the buffer for the next batch
@@ -140,6 +127,8 @@ class PlateDetection(Node):
 
         # Initialization of the list for confidnece scores:
         confidence=[]
+        detected_texts = [] #Buffer for detected texts to verify 
+        confidences=[] # Buffer for detected texts confidences
         # Step 1: Detection and extraction of the ROI
         results = self.model(image)
         if len(results) > 0 and len(results[0].boxes) > 0:
@@ -172,7 +161,16 @@ class PlateDetection(Node):
             self.get_logger().info("No license plate detected.")
             extracted_text="0000000"
             confidence=[0,0,0,0,0,0,0]
-        return extracted_text,confidence    
+        detected_texts.append(extracted_text)
+        confidences.append(confidence)
+        # Verify text: 
+        verified_text=self.verify_text(detected_texts,confidences)
+        # Publish Results
+        self.get_logger().info(f"Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}")
+        msg = String()
+        msg.data = f"Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}"
+        self.pub_text.publish(msg)
+            
             
     def validate_plate(self,plate):
         # Regex for current French license plate format (AA123AA)
