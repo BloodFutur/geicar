@@ -10,6 +10,10 @@
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tf2_ros/static_transform_broadcaster.h"
 #include "tf2_ros/transform_broadcaster.h"
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <chrono>
 #include <vector>
 #include <cmath>
 #include <algorithm>
@@ -35,11 +39,15 @@ private:
     void odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
     void path_callback(const nav_msgs::msg::Path::SharedPtr msg);
     void publishCmd(double v, double w);
+    void publish_demo_cmd();
+    bool load_message(const std::string &filename);
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub;
     rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr cmd_vel_rviz_pub;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub;
     rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_sub;
     rclcpp::TimerBase::SharedPtr timer;
+    std::vector<std::vector<std::string>> csv_data_;
+    int current_index_;
     double x, y, yaw, v, w;
     int target_ind;
     int oldNearestPointIndex;

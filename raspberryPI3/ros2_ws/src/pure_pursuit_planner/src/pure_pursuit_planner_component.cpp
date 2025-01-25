@@ -9,6 +9,7 @@ PurePursuitNode::PurePursuitNode()
     // Parameter setting
     target_ind = 0;
     oldNearestPointIndex = -1;
+    current_index_ = -1;
 
     // Publisher
     cmd_vel_pub = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
@@ -21,16 +22,24 @@ PurePursuitNode::PurePursuitNode()
             "path", 20,
             std::bind(&PurePursuitNode::path_callback, this, std::placeholders::_1));
     
+    // Load CSV data
+    if (!load_message("cmd_vel_demo.csv")) {
+        RCLCPP_ERROR(this->get_logger(), "Failed to load CSV file");
+        rclcpp::shutdown();
+    }
+
     // Timer callback
     timer = this->create_wall_timer(std::chrono::milliseconds(static_cast<int>(dt * 1000)),
                                     std::bind(&PurePursuitNode::updateControl, this));
+
 }
 
 void PurePursuitNode::updateControl() {
     //Ajout 
-    if (path_subscribe_flag) {
-        auto [v, w] = purePursuitControl(target_ind);
-        publishCmd(v, w);
+    if (path_subscribe_flag && current_index_ != -1) {
+        // auto [v, w] = purePursuitControl(target_ind);
+        // publishCmd(v, w);
+        publish_demo_cmd();
     } else {
         RCLCPP_WARN(this->get_logger(), "Path data not available yet.");
     }
@@ -66,10 +75,10 @@ std::pair<double, double> PurePursuitNode::purePursuitControl(int& pind) {
 
     pind = ind;
 
-    RCLCPP_DEBUG(this->get_logger(), "Current position: x=%.2f, y=%.2f, yaw=%.2f", x, y, yaw);
-    RCLCPP_DEBUG(this->get_logger(), "Target position: x=%.2f, y=%.2f", target_lookahed_x, target_lookahed_y);
-    RCLCPP_DEBUG(this->get_logger(), "Target index: %d, Lf=%.2f", ind, Lf);
-    RCLCPP_DEBUG(this->get_logger(), "Calculated: alpha=%.2f, v=%.2f, w=%.2f", alpha, v, w);
+    RCLCPP_INFO(this->get_logger(), "Current position: x=%.2f, y=%.2f, yaw=%.2f", x, y, yaw);
+    RCLCPP_INFO(this->get_logger(), "Target position: x=%.2f, y=%.2f", target_lookahed_x, target_lookahed_y);
+    RCLCPP_INFO(this->get_logger(), "Target index: %d, Lf=%.2f", ind, Lf);
+    RCLCPP_INFO(this->get_logger(), "Calculated: alpha=%.2f, v=%.2f, w=%.2f", alpha, v, w);
 
     return { v, w };
 }
@@ -164,6 +173,70 @@ void PurePursuitNode::path_callback(const nav_msgs::msg::Path::SharedPtr msg) {
     path_subscribe_flag = true;
     // Ajout 
     // RCLCPP_INFO(this->get_logger(), "Path data received successfully.");
+}
+
+
+bool PurePursuitNode::load_message(const std::string &filename)
+{
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        return false;
+    }
+    std::string line;
+    std::getline(file, line);
+
+    while (std::getline(file, line)) {
+        std::vector<std::string> row;
+        std::stringstream ss(line);
+        std::string cell;
+
+        while (std::getline(ss, cell, ',')) {
+            row.push_back(cell);
+        }
+        csv_data_.emplace_back(row);
+    }
+
+    current_index_ = 0;
+    return !csv_data_.empty();
+}
+
+void PurePursuitNode::publish_demo_cmd()
+{
+    if (current_index_ >= static_cast<int>(csv_data_.size())) {
+        RCLCPP_INFO(this->get_logger(), "Finished publishing all rows");
+        rclcpp::shutdown();
+        return;
+    }
+
+    auto msg = geometry_msgs::msg::Twist();
+    const auto &row = csv_data_[current_index_];
+
+    // Parse CSV row into message
+    try {
+        msg.linear.x = std::stod(row[1]);
+        msg.linear.y = std::stod(row[2]);
+        msg.linear.z = std::stod(row[3]);
+        msg.angular.x = std::stod(row[4]);
+        msg.angular.y = std::stod(row[5]);
+        msg.angular.z = std::stod(row[6]);
+    } catch (const std::exception &e) {
+        RCLCPP_ERROR(this->get_logger(), "Error parsing row %d: %s", current_index_, e.what());
+        rclcpp::shutdown();
+        return;
+    }
+
+    // Publish message
+    auto twist_stamped_msg = geometry_msgs::msg::TwistStamped();
+    twist_stamped_msg.header.stamp = this->get_clock()->now();
+    twist_stamped_msg.header.frame_id = "base_link";             
+    twist_stamped_msg.twist = msg;                     
+    
+    cmd_vel_rviz_pub->publish(twist_stamped_msg);
+    cmd_vel_pub->publish(msg);
+
+    // RCLCPP_INFO(this->get_logger(), "Published row %d", current_index_);
+
+    current_index_++;
 }
 
 void PurePursuitNode::publishCmd(double v, double w)
