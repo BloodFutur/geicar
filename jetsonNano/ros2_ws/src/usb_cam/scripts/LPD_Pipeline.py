@@ -38,8 +38,8 @@ class PlateDetection(Node):
 
         # Initilize local variables
         self.buffer = []
-        self.max_buffer_size = 3
-        self.frame_skip = 3  # Sample every 5th frame
+        self.max_buffer_size = 10
+        self.frame_skip = 2  # Sample every 5th frame
         self.frame_count = 0
         self.latitude = 0.0
         self.longitude = 0.0
@@ -88,26 +88,28 @@ class PlateDetection(Node):
     def image_callback(self, image_msg):
         self.get_logger().info("Ready to process images")
         """Handles incoming images, buffers, and triggers processing."""
-        self.frame_count += 1
- 
-        # Skip frames to sample every N frames
-        if self.frame_count % self.frame_skip != 0:
-            return
-        
+
         try:
         # Convert ROS image message to OpenCV image
             frame = self.bridge.imgmsg_to_cv2(image_msg, desired_encoding='bgr8')
         except Exception as e:
             self.get_logger().error(f"Failed to convert image: {e}")
             return
-
+        results = self.model(frame)
+        if len(results) > 0 and len(results[0].boxes) > 0:
         # Add the image to the buffer
-        self.buffer.append(frame)
-        self.get_logger().info(f"Buffered image {len(self.buffer)}/{self.max_buffer_size}")
-        # If buffer is full, clear the buffer 
-        if len(self.buffer) == self.max_buffer_size:
-            self.process_images()
-            self.buffer = []  # Clear the buffer for the next batch
+            self.get_logger().info(f"License plate detected started buffering.")
+            self.frame_count += 1
+ 
+        # Skip frames to sample every N frames
+            if self.frame_count % self.frame_skip != 0:
+                return
+            self.buffer.append(frame)
+            self.get_logger().info(f"Buffered image {len(self.buffer)}/{self.max_buffer_size}")
+            # If buffer is full, clear the buffer 
+            if len(self.buffer) == self.max_buffer_size:
+                self.process_images()
+                self.buffer = []  # Clear the buffer for the next batch
             
     def process_images(self):
 
