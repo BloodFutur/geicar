@@ -23,7 +23,7 @@ export function Battery({ value, sx }: BatteryProps): React.JSX.Element {
               <Typography color="text.secondary" variant="overline">
                 Battery
               </Typography>
-              <Typography variant="h4">{value}V</Typography>
+              <Typography variant="h4">{value.toFixed(1)}V</Typography>
             </Stack>
             <Avatar sx={{ backgroundColor: (value < 11.5) ? 'var(--mui-palette-error-main)' : ((value >= 12.5) ? 'var(--mui-palette-success-main)' : 'var(--mui-palette-warning-main)'), height: '56px', width: '56px' }}>
               <CarBatteryIcon fontSize="var(--icon-fontSize-lg)" />

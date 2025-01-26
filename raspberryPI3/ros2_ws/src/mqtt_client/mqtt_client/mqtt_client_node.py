@@ -77,6 +77,7 @@ class Ros2MqttClient(Node):
         self.setup_mqtt_client()
         self.setup_ros2_subscribers()
         self.last_publish_time = 0
+        self.uptime_timer_1mn = self.create_timer(60, self.uptime_timer_callback)
         
     def setup_mqtt_client(self) -> None:
         self.mqtt_client = mqtt.Client(transport=self.config.transport)
@@ -137,6 +138,13 @@ class Ros2MqttClient(Node):
         
     def joystick_order_listener_cb(self, msg):
         self.publish_message(self.ros2_subscribers['mode'][3], msg)
+    
+    def uptime_timer_callback(self):
+        uptime = get_uptime()
+        uptime_msg = {
+            'uptime': uptime
+        }
+        self.publish_message("vehicle/uptime", json.dumps(uptime_msg))
 
     def destroy_node(self):
         # Stop MQTT loop before destroying the node
@@ -150,8 +158,6 @@ def get_uptime():
     uptime_string = time.strftime('%H:%M:%S', time.gmtime(uptime_seconds))
     return uptime_string
     
-
-print(f"System uptime: {get_uptime()}")
 
 def main(args=None):
     rclpy.init(args=args)
