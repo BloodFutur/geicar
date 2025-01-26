@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import cv2
+#import cv2
 import numpy as np
 import rclpy
 from rclpy.node import Node
@@ -12,7 +12,7 @@ from ultralytics import YOLO  # YOLOv8 for detection
 from Tilt_Corrector import Rotator  # Import Tilt Correction
 from Segmentor import CharacterSegmentation  # Import Character Segmentation
 import easyocr  # For OCR
-import torch
+#import torch
 import re
 from collections import defaultdict
 
@@ -28,6 +28,7 @@ class PlateDetection(Node):
         self.model = YOLO("/root/geicar/PlaqueDetection/runs/detect/train7/weights/best.pt")
         # Move the model to the GPU
         #self.model.to(device)
+        self.model.eval() 
 
         #self.model=YOLO('/home/pi/geicar/PlaqueDetection/runs/detect/train7/weights/best.pt')
         self.get_logger().info("YOLOv8 model loaded successfully!")
@@ -40,7 +41,7 @@ class PlateDetection(Node):
         self.buffer = []
         self.max_buffer_size = 5
         self.isbuffering=False
-        self.frame_skip = 5  # Sample every 5th frame
+        self.frame_skip = 3  # Sample every 5th frame
         self.frame_count = 0
         self.latitude = 0.0
         self.longitude = 0.0
@@ -99,7 +100,7 @@ class PlateDetection(Node):
             return
         if not self.isbuffering: 
             results = self.model(frame)
-            if len(results) > 0 and len(results[0].boxes) > 0 and (box.conf[0]>0.8 for box in results[0].boxes ):
+            if len(results) > 0 and len(results[0].boxes) > 0 and (box.conf[0]>0.9 for box in results[0].boxes ):
                 self.isbuffering= True
                 self.frame_count = 0 
                 self.get_logger().info(f"License plate detected started buffering.")
@@ -138,7 +139,7 @@ class PlateDetection(Node):
         confidences=[] # Buffer for detected texts confidences
         
         # Step 1: Detection and extraction of the ROI
-        results = self.model(self.buffer,imgsz=640)
+        results = self.model(self.buffer)
         for i,result in enumerate (results):
             if len(result) > 0 and len(result[0].boxes) > 0:
                 box = result[0].boxes[0]  # First bounding box
