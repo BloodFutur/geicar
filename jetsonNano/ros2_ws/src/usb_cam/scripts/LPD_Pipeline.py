@@ -174,7 +174,7 @@ class PlateDetection(Node):
             # Verify text: 
         verified_text=self.verify_text(detected_texts,confidences)
         # Publish Results
-        if verified_text is not "INVALID":
+        if verified_text!="INVALID":
             self.get_logger().info(f"Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}")
             msg = String()
             msg.data = f"Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}"
