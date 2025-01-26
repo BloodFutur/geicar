@@ -60,7 +60,7 @@ class PlateDetection(Node):
             Image,
             'image_raw',
             self.image_callback,
-            100
+            10
         )
         # Subscription to gps topic
         self.sub2 = self.create_subscription(
