@@ -11,6 +11,7 @@
 #include "tf2_ros/static_transform_broadcaster.h"
 #include "tf2_ros/transform_broadcaster.h"
 #include "std_msgs/msg/bool.hpp"
+#include "sensor_msgs/msg/nav_sat_fix.hpp"
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -36,6 +37,8 @@ private:
     void updateControl();
     std::pair<double, double> purePursuitControl(int& pind);
     std::pair<int, double> searchTargetIndex();
+    bool load_gps_data(const std::string &filename);
+    void sync_gps_with_cmd_vel();
     double calcDistance(double point_x, double point_y) const;
     void odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
     void path_callback(const nav_msgs::msg::Path::SharedPtr msg);
@@ -45,11 +48,14 @@ private:
     void autonomous_mode_callback(const std_msgs::msg::Bool::SharedPtr msg);
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub;
     rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr cmd_vel_rviz_pub;
+    rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr gps_fix_pub;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr autonomous_mode_sub;
     rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_sub;
     rclcpp::TimerBase::SharedPtr timer;
     std::vector<std::vector<std::string>> csv_data_;
+    std::vector<std::vector<double>> gps_data_;
+    int gps_index_;
     int current_index_;
     double x, y, yaw, v, w;
     int target_ind;
