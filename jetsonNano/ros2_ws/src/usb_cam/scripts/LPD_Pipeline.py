@@ -38,9 +38,9 @@ class PlateDetection(Node):
 
         # Initilize local variables
         self.buffer = []
-        self.max_buffer_size = 2
+        self.max_buffer_size = 5
         self.isbuffering=False
-        self.frame_skip = 8  # Sample every 5th frame
+        self.frame_skip = 5  # Sample every 5th frame
         self.frame_count = 0
         self.latitude = 0.0
         self.longitude = 0.0
@@ -136,14 +136,16 @@ class PlateDetection(Node):
         confidence=[]
         detected_texts = [] #Buffer for detected texts to verify 
         confidences=[] # Buffer for detected texts confidences
-        for image in self.buffer:
-            # Step 1: Detection and extraction of the ROI
-            results = self.model(image)
-            if len(results) > 0 and len(results[0].boxes) > 0:
-                box = results[0].boxes[0]  # First bounding box
+        
+        # Step 1: Detection and extraction of the ROI
+        results = self.model(self.buffer,imgsz=640)
+        for i,result in enumerate (results):
+            if len(result) > 0 and len(result[0].boxes) > 0:
+                box = result[0].boxes[0]  # First bounding box
                 x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box coordinates
 
                 # Crop license plate from the image
+                image=self.buffer[i]
                 cropped_plate = image[y1:y2, x1:x2]
                 self.get_logger().info(f"License plate detected and cropped.")
         
