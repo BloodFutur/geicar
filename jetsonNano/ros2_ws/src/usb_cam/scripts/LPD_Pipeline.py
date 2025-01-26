@@ -38,9 +38,9 @@ class PlateDetection(Node):
 
         # Initilize local variables
         self.buffer = []
-        self.max_buffer_size = 4
+        self.max_buffer_size = 3
         self.isbuffering=False
-        self.frame_skip = 2  # Sample every 5th frame
+        self.frame_skip = 4  # Sample every 5th frame
         self.frame_count = 0
         self.latitude = 0.0
         self.longitude = 0.0
@@ -60,7 +60,7 @@ class PlateDetection(Node):
             Image,
             'image_raw',
             self.image_callback,
-            10
+            1
         )
         # Subscription to gps topic
         self.sub2 = self.create_subscription(
