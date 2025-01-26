@@ -99,7 +99,7 @@ class PlateDetection(Node):
             return
         if not self.isbuffering: 
             results = self.model(frame)
-            if len(results) > 0 and len(results[0].boxes) > 0 and (box.conf[0]>0.6 for box in results[0].boxes ):
+            if len(results) > 0 and len(results[0].boxes) > 0 and (box.conf[0]>0.8 for box in results[0].boxes ):
                 self.isbuffering= True
                 self.frame_count = 0 
                 self.get_logger().info(f"License plate detected started buffering.")
@@ -174,10 +174,11 @@ class PlateDetection(Node):
             # Verify text: 
         verified_text=self.verify_text(detected_texts,confidences)
         # Publish Results
-        self.get_logger().info(f"Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}")
-        msg = String()
-        msg.data = f"Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}"
-        self.pub_text.publish(msg)
+        if verified_text is not "INVALID":
+            self.get_logger().info(f"Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}")
+            msg = String()
+            msg.data = f"Plate: {verified_text}, Latitude: {self.latitude}, Longitude: {self.longitude}"
+            self.pub_text.publish(msg)
             
             
     def validate_plate(self,plate):
