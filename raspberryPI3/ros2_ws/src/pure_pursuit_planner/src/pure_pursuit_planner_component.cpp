@@ -296,40 +296,45 @@ void PurePursuitNode::publish_demo_cmd()
 
 void PurePursuitNode::sync_gps_with_cmd_vel() {
     // Synchroniser les timestamps entre cmd_vel et gps
-    if (gps_index_ >= static_cast<int>(gps_data_.size())) {
+    if (gps_index_ >= static_cast<int>(gps_data_.size()) || current_index_ >= static_cast<int>(csv_data_.size())) {
         return;
     }
 
     const auto &gps_row = gps_data_[gps_index_];
-    std::string gps_time_str = std::to_string(gps_row[0]);// Format: "2025/01/23 13:23:43.694184564"
-    std::tm gps_tm = {};
-    std::istringstream ss(gps_time_str);
-    ss >> std::get_time(&gps_tm, "%Y/%m/%d %H:%M:%S");
-    auto gps_time_point = std::chrono::system_clock::from_time_t(std::mktime(&gps_tm));
-    rclcpp::Time gps_time_rclcpp(static_cast<int64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(gps_time_point.time_since_epoch()).count()));
+    const auto &cmd_row = csv_data_[current_index_];
 
-    // Si le timestamp GPS est avant celui de cmd_vel, on publie le GPS ajusté
-    if (gps_time_rclcpp  <= this->get_clock()->now()) {
+    double gps_time = gps_row[0];
+    double cmd_time = std::stod(cmd_row[0]);
+
+     // Comparer les timestamps avec une tolérance
+    double tolerance = 0.1; // 100 ms
+    if (std::abs(gps_time - cmd_time) <= tolerance) {
+        // Publier les données GPS
         sensor_msgs::msg::NavSatFix gps_msg;
-        
-        // Parse the GPS data
+
         try {
-            gps_msg.latitude = gps_row[6];
-            gps_msg.longitude = gps_row[7];
-            gps_msg.altitude = gps_row[8];
-            gps_msg.position_covariance_type = gps_row[17];
+            gps_msg.latitude = gps_row[1]; // Assurez-vous des indices ici (latitude)
+            gps_msg.longitude = gps_row[2]; // Longitude
+            gps_msg.altitude = gps_row[3]; // Altitude
+            gps_msg.header.stamp = this->get_clock()->now();
+            gps_msg.header.frame_id = "base_link";
         } catch (const std::exception &e) {
             RCLCPP_ERROR(this->get_logger(), "Error parsing GPS row %d: %s", gps_index_, e.what());
             return;
         }
 
-        gps_msg.header.stamp = this->get_clock()->now();  // Assign current timestamp
-        gps_msg.header.frame_id = "base_link";
-        
         gps_fix_pub->publish(gps_msg);
-        gps_index_++;
-    }
 
+        // Avancer les index pour éviter les doublons
+        gps_index_++;
+        current_index_++;
+    } else if (gps_time < cmd_time) {
+        // Avancer uniquement l'index GPS si le temps GPS est en retard
+        gps_index_++;
+    } else {
+        // Avancer uniquement l'index des commandes si le temps GPS est en avance
+        current_index_++;
+    }
 }
 
 void PurePursuitNode::publishCmd(double v, double w)
