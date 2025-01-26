@@ -23,22 +23,22 @@ class PlateDetection(Node):
 
         # CvBridge for the conversion between ROS and OpenCV
         self.bridge = CvBridge()
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         # Load the YOLOv8 model
         self.model = YOLO("/root/geicar/PlaqueDetection/runs/detect/train7/weights/best.pt")
         # Move the model to the GPU
-        self.model.to(device)
+        #self.model.to(device)
 
         #self.model=YOLO('/home/pi/geicar/PlaqueDetection/runs/detect/train7/weights/best.pt')
         self.get_logger().info("YOLOv8 model loaded successfully!")
 
         # Initialize EasyOCR
-        self.reader = easyocr.Reader(['en'],gpu=True)
+        self.reader = easyocr.Reader(['en']) #gpu='true'
         self.get_logger().info("EasyOCR loaded and initialized successfully!")
 
         # Initilize local variables
         self.buffer = []
-        self.max_buffer_size = 5
+        self.max_buffer_size = 4
         self.isbuffering=False
         self.frame_skip = 2  # Sample every 5th frame
         self.frame_count = 0
@@ -99,7 +99,7 @@ class PlateDetection(Node):
             return
         if not self.isbuffering: 
             results = self.model(frame)
-            if len(results) > 0 and len(results[0].boxes) > 0:
+            if len(results) > 0 and len(results[0].boxes) > 0 and (box.conf[0]>0.6 for box in results[0].boxes ):
                 self.isbuffering= True
                 self.frame_count = 0 
                 self.get_logger().info(f"License plate detected started buffering.")
