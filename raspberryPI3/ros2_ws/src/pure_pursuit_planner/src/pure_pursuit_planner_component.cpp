@@ -1,5 +1,7 @@
 #include "pure_pursuit_planner/pure_pursuit_planner_component.hpp"
 #include "nav_msgs/msg/path.hpp"
+#include "sensor_msgs/msg/nav_sat_fix.hpp"
+
 
 using std::placeholders::_1;
 using namespace std::chrono_literals;
@@ -15,6 +17,7 @@ PurePursuitNode::PurePursuitNode()
     // Publisher
     cmd_vel_pub = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
     cmd_vel_rviz_pub = this->create_publisher<geometry_msgs::msg::TwistStamped>("cmd_vel_rviz", 10);
+    gps_fix_pub = this->create_publisher<sensor_msgs::msg::NavSatFix>("gps/fix_adjusted", 10);
 
     // Subscriber
     odom_sub = this->create_subscription<nav_msgs::msg::Odometry>(
@@ -27,10 +30,15 @@ PurePursuitNode::PurePursuitNode()
             std::bind(&PurePursuitNode::autonomous_mode_callback, this, std::placeholders::_1));
     
     // Load CSV data
-    if (!load_message("cmd_vel_demo.csv")) {
+    if (!load_message("cmd_vel_demo_adjusted.csv")) {
         RCLCPP_ERROR(this->get_logger(), "Failed to load CSV file");
         rclcpp::shutdown();
     }
+    if (!load_gps_data("gps_fix_adjusted.csv")) {  // Charger le fichier GPS
+        RCLCPP_ERROR(this->get_logger(), "Failed to load GPS CSV file");
+        rclcpp::shutdown();
+    }
+
 
     // Timer callback
     timer = this->create_wall_timer(std::chrono::milliseconds(static_cast<int>(dt * 1000)),
@@ -45,6 +53,43 @@ void PurePursuitNode::updateControl() {
         // publishCmd(v, w);
         publish_demo_cmd();    
     }
+}
+
+bool PurePursuitNode::load_gps_data(const std::string &filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        return false;
+    }
+    std::string line;
+    std::getline(file, line); // Skip header
+
+    while (std::getline(file, line)) {
+        std::vector<std::string> row;
+        std::stringstream ss(line);
+        std::string cell;
+
+        while (std::getline(ss, cell, ',')) {
+            row.push_back(cell);
+        }
+
+         // Convertir les éléments de row en double et ajouter à gps_data_
+        std::vector<double> gps_data_row;
+        try {
+            gps_data_row.push_back(std::stod(row[0])); // Par exemple, temps GPS
+            gps_data_row.push_back(std::stod(row[6])); // Latitude
+            gps_data_row.push_back(std::stod(row[7])); // Longitude
+            gps_data_row.push_back(std::stod(row[8])); // Altitude
+            // Si tu as d'autres valeurs que tu veux ajouter, fais-le ici
+        } catch (const std::invalid_argument &e) {
+            RCLCPP_ERROR(this->get_logger(), "Erreur de conversion dans la ligne %d : %s", gps_index_, e.what());
+            continue; // Passer à la ligne suivante en cas d'erreur de conversion
+        }
+
+        gps_data_.emplace_back(gps_data_row); // Ajouter la ligne convertie à gps_data_
+    }
+
+    gps_index_ = 0;
+    return !gps_data_.empty();
 }
 
 std::pair<double, double> PurePursuitNode::purePursuitControl(int& pind) {
@@ -241,9 +286,50 @@ void PurePursuitNode::publish_demo_cmd()
     cmd_vel_rviz_pub->publish(twist_stamped_msg);
     cmd_vel_pub->publish(msg);
 
+    // Synchronize GPS and cmd_vel messages
+    sync_gps_with_cmd_vel();
+
     // RCLCPP_INFO(this->get_logger(), "Published row %d", current_index_);
 
     current_index_++;
+}
+
+void PurePursuitNode::sync_gps_with_cmd_vel() {
+    // Synchroniser les timestamps entre cmd_vel et gps
+    if (gps_index_ >= static_cast<int>(gps_data_.size())) {
+        return;
+    }
+
+    const auto &gps_row = gps_data_[gps_index_];
+    std::string gps_time_str = std::to_string(gps_row[0]);// Format: "2025/01/23 13:23:43.694184564"
+    std::tm gps_tm = {};
+    std::istringstream ss(gps_time_str);
+    ss >> std::get_time(&gps_tm, "%Y/%m/%d %H:%M:%S");
+    auto gps_time_point = std::chrono::system_clock::from_time_t(std::mktime(&gps_tm));
+    rclcpp::Time gps_time_rclcpp(static_cast<int64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(gps_time_point.time_since_epoch()).count()));
+
+    // Si le timestamp GPS est avant celui de cmd_vel, on publie le GPS ajusté
+    if (gps_time_rclcpp  <= this->get_clock()->now()) {
+        sensor_msgs::msg::NavSatFix gps_msg;
+        
+        // Parse the GPS data
+        try {
+            gps_msg.latitude = gps_row[6];
+            gps_msg.longitude = gps_row[7];
+            gps_msg.altitude = gps_row[8];
+            gps_msg.position_covariance_type = gps_row[17];
+        } catch (const std::exception &e) {
+            RCLCPP_ERROR(this->get_logger(), "Error parsing GPS row %d: %s", gps_index_, e.what());
+            return;
+        }
+
+        gps_msg.header.stamp = this->get_clock()->now();  // Assign current timestamp
+        gps_msg.header.frame_id = "base_link";
+        
+        gps_fix_pub->publish(gps_msg);
+        gps_index_++;
+    }
+
 }
 
 void PurePursuitNode::publishCmd(double v, double w)
