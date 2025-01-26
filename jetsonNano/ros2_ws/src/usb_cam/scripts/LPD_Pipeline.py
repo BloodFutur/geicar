@@ -38,7 +38,7 @@ class PlateDetection(Node):
 
         # Initilize local variables
         self.buffer = []
-        self.max_buffer_size = 10
+        self.max_buffer_size = 5
         self.isbuffering=False
         self.frame_skip = 2  # Sample every 5th frame
         self.frame_count = 0
