@@ -53,14 +53,14 @@ class PlateDetection(Node):
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE, # Ensure all messages are reliably delivered to the subscriber.
             history=HistoryPolicy.KEEP_LAST,
-            depth=20  # Queue size
+            depth=1  # Queue size
             )
         # Subscribe to the buffer topic
         self.sub = self.create_subscription(
             Image,
             'image_raw',
             self.image_callback,
-            1
+            qos_profile
         )
         # Subscription to gps topic
         self.sub2 = self.create_subscription(
