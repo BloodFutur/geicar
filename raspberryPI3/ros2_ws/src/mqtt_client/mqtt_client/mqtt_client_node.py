@@ -9,6 +9,7 @@ import time
 from sensor_msgs.msg import NavSatFix, CompressedImage
 from interfaces.msg import SystemCheck, GeneralData, JoystickOrder
 import paho.mqtt.client as mqtt
+from std_msgs.msg import String
 
 @dataclass
 class MqttConfig:
@@ -99,7 +100,8 @@ class Ros2MqttClient(Node):
             'plate_img': ('plate_detection/compressed', CompressedImage, self.plate_detection_listener_cb, "plate_detection"),
             'system_check_report': ('system_check', SystemCheck, self.system_check_listener_cb, "system_check"),
             'general_data': ('general_data', GeneralData, self.general_data_listener_cb, "general_data"),
-            'mode': ('joystick_order', JoystickOrder, self.joystick_order_listener_cb, "joystick_order")
+            'mode': ('joystick_order', JoystickOrder, self.joystick_order_listener_cb, "joystick_order"),
+            'plate_detection': ('detected_plate_text', String, self.plate_detection_listener_cb, "detected_plate_text")
         }
         
         for _, (topic, msg_type, callback, _) in self.ros2_subscribers.items():
@@ -145,6 +147,9 @@ class Ros2MqttClient(Node):
             'uptime': uptime
         }
         self.publish_message("vehicle/uptime", json.dumps(uptime_msg))
+
+    def plate_detection_listener_cb(self, msg):
+        self.publish_message(self.ros2_subscribers['plate_detection'][3], msg)
 
     def destroy_node(self):
         # Stop MQTT loop before destroying the node

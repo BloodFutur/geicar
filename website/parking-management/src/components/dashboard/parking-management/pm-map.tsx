@@ -10,6 +10,25 @@ interface NavSatFix {
     longitude: number;
 }
 
+interface Detection {
+    plate: string;
+    latitude: number;
+    longitude: number;
+    confidence: number;
+}
+
+interface ParkingSpace {
+    id: number;
+    lat: number;
+    lon: number;
+    status: 'free' | 'taken';
+    plate: string;
+}
+
+interface ParkingPolygon {
+    id: number;
+    poly: L.Polygon;
+}
 
 function ParkingManagementMap() {
     const { status, payload, mqttSub } = useMqtt();
@@ -17,11 +36,17 @@ function ParkingManagementMap() {
     const mapRef = useRef<L.Map | null>(null);
     const [gpsMessages, setGpsMessages] = useState<string[]>([]);
     const [parkingSpaces, setParkingSpaces] = useState<any[]>([]);
+    const [parkingSpacesAdjusted, setParkingSpacesAdjusted] = useState<ParkingSpace[]>([]);
+    const [parkingSpacesPolygons, setParkingSpacesPolygons] = useState<ParkingPolygon[]>([]);
     const gpsTopicName = 'gps';
+    const plateDetectionTopicName = 'detected_plate_text';
+
     const popup = useRef<L.Popup | null>(null);
     const parkingLayerRef = useRef<L.GeoJSON | null>(null);
     const [pathSegments, setPathSegments] = useState<any[]>([]);
     const addedParkingSpaces = new Set();
+
+    const [detection, setDetection] = useState<Detection | null>(null);
 
     const colors = {
         5: 'green',  // RTK Float
@@ -34,6 +59,7 @@ function ParkingManagementMap() {
     useEffect(() => {
         if (!status) return;
         mqttSub(gpsTopicName);
+        mqttSub(plateDetectionTopicName);
     }, [status]);
 
     // Initialize Leaflet map
@@ -89,6 +115,45 @@ function ParkingManagementMap() {
                 console.error('Error parsing NavSatFix message:', error);
             }
         }
+        if (payload?.topic == plateDetectionTopicName) {
+            try {
+                // There are double quotes and backslashes in the message, so we need to parse it twice
+                const message = JSON.parse(payload.message);
+
+                const [plateField, latField, longField, confField] = message.data.split(',').map(String);
+                const plate = plateField.split(':')[1];
+                const lat = latField.split(':')[1];
+                const long = longField.split(':')[1];
+                const conf = confField.split(':')[1];
+                setDetection({plate, latitude: parseFloat(lat), longitude: parseFloat(long), confidence: parseFloat(conf)});
+                
+                console.log('Detection:', detection);
+
+                // Search for the closest parking space
+                if (detection) {
+                    const closestParking = parkingSpacesAdjusted.reduce((acc, parking) => {
+                        const distance = Math.sqrt(Math.pow(parking.lat - detection.latitude, 2) + Math.pow(parking.lon - detection.longitude, 2));
+                        return distance < acc[1] ? [parking, distance] : acc;
+                    }, [null, Infinity]);
+
+                    // Convert the distance to meters
+                    closestParking[1] = closestParking[1] * 111000; // 1 degree of latitude is 111 km
+
+                    // Display the closest parking space
+                    console.log('Closest parking:', closestParking);
+
+                    // Modify the parking space status
+                    if (closestParking[1] < 10) {
+                        closestParking[0].status = 'taken';
+                        closestParking[0].plate = detection.plate;
+                        setParkingSpacesAdjusted([...parkingSpacesAdjusted]);
+                    }
+                }
+            }
+            catch (error) {
+                console.error('Error parsing vehicle uptime message:', error);
+            }
+        }
     }, [payload])
 
 
@@ -139,39 +204,96 @@ function ParkingManagementMap() {
 
         const nodes = parkingSpaces.filter((el) => el.type === "node");
         const ways = parkingSpaces.filter((el) => el.type === "way");
-        console.log('Nodes:', nodes.length, 'Ways:', ways.length);
-        ways.forEach((way) => {
-            if (addedParkingSpaces.has(way.id)) return;
+        
+        // Add parking to parkingSpacesAdjusted
+        // Parking should contain the following fields: id, lat, lon, status, plate
+        // the lat, lon are the coordinates of the the center of the parking space
 
+        let parkingSpacesAdjustedTmp: ParkingSpace[] = [];
+        ways.forEach((way) => {
+            // Find the center of the parking space
             const coordinates = way.nodes
                 .map((nodeId: number) => {
                     const node = nodes.find((n) => n.id === nodeId);
                     return node ? [node.lat, node.lon] : null;
                 })
                 .filter((coord: any) => coord !== null);
-
+            
+            // Add the parking space to the parkingSpacesAdjusted
             if (coordinates.length) {
-                const poly = L.polygon(coordinates as L.LatLngExpression[]);
-                const taken = Math.random() < 0.7;
-                const color = taken ? '#FF0000' : '#00FF00';
-                poly.setStyle({fillColor: color, color});
-                poly.on("click", () => {
-                    const bounds = poly.getBounds();
-                    popup.current?.setLatLng(bounds.getCenter());
-                    const content = ` \
-                    <h3>Parking Space</h3> \
-                    <p>${  taken ? 'Taken' : 'Free'  }</p> \
-                    <p>${  taken ? 'AA-123-BB' : ''  }</p> \
-                    `;
-                    popup.current?.setContent(content);
-                    mapRef.current?.openPopup(popup.current);
+                const center = coordinates.slice(0, -1).reduce((acc: any, coord: any) => {
+                    acc[0] += coord[0];
+                    acc[1] += coord[1];
+                    return acc;
+                }, [0, 0]).map((coord: number) => coord / (coordinates.length - 1));
+                parkingSpacesAdjustedTmp.push({
+                    id: way.id,
+                    lat: center[0],
+                    lon: center[1],
+                    status: 'free',
+                    plate: ''
                 });
-                parkingLayerRef.current?.addLayer(poly);
-                addedParkingSpaces.add(way.id);
             }
         });
-        console.log('Added parking spaces:', addedParkingSpaces.size);
+
+        setParkingSpacesAdjusted(parkingSpacesAdjustedTmp);
+        // console.log('Parking spaces adjusted:', parkingSpacesAdjustedTmp);
     }, [parkingSpaces]);
+
+    useEffect(() => {
+        if (parkingSpacesAdjusted.length) {
+            // Display parking spaces on the map
+            // For each parking space adjusted, get the corresponding parking space from parkingSpaces to draw the polygon
+            // If the parking space is taken, display the plate
+            // If the parking space is free, display nothing
+            let parkingPolyTmp: ParkingPolygon[] = [];
+
+            parkingSpacesAdjusted.forEach((parking) => {
+                const parkingSpace = parkingSpaces.find((p) => p.id === parking.id);
+                if (!parkingSpace) return;
+
+                // console.log('P.id vs parking.id', parkingSpace.id, parking.id);
+                if (parkingSpacesPolygons.find((p) => p.id === parking.id)) {
+                    const poly = parkingSpacesPolygons.find((p) => p.id === parking.id)?.poly;
+                    const taken = parking.status === 'taken';
+                    const color = taken ? '#FF0000' : '#00FF00';
+                    poly?.setStyle({fillColor: color, color});
+                    poly?.bindPopup(` \
+                        <h3>Parking Space</h3> \
+                        <p>${  taken ? 'Taken' : 'Free'  }</p> \
+                        <p>${  taken ? parking.plate : ''  }</p> \
+                    `);
+                } else {
+                    // console.log('Adding parking space:', parking.id);
+                    const poly = L.polygon(parkingSpace.nodes.map((nodeId: number) => {
+                        const node = parkingSpaces.find((n) => n.id === nodeId);
+                        return node ? [node.lat, node.lon] : null;
+                    }).filter((coord: any) => coord !== null) as L.LatLngExpression[]);
+                    const taken = parking.status === 'taken';
+                    const color = taken ? '#FF0000' : '#00FF00';
+                    poly.setStyle({fillColor: color, color});
+                    poly.on("click", () => {
+                        const bounds = poly.getBounds();
+                        popup.current?.setLatLng(bounds.getCenter());
+                        const content = ` \
+                        <h3>Parking Space</h3> \
+                        <p>${  taken ? 'Taken' : 'Free'  }</p> \
+                        <p>${  taken ? parking.plate : ''  }</p> \
+                        `;
+                        popup.current?.setContent(content);
+                        mapRef.current?.openPopup(popup.current);
+                    });
+                    parkingLayerRef.current?.addLayer(poly);
+                    parkingPolyTmp.push({id: parking.id, poly});
+                }
+                
+            });
+
+            if (parkingPolyTmp.length) {
+                setParkingSpacesPolygons(parkingPolyTmp);
+            }
+        }
+    }, [parkingSpacesAdjusted]);
 
     // Fetch parking data on mount
     useEffect(() => {
