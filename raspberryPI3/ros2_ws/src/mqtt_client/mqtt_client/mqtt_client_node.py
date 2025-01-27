@@ -101,7 +101,7 @@ class Ros2MqttClient(Node):
             'system_check_report': ('system_check', SystemCheck, self.system_check_listener_cb, "system_check"),
             'general_data': ('general_data', GeneralData, self.general_data_listener_cb, "general_data"),
             'mode': ('joystick_order', JoystickOrder, self.joystick_order_listener_cb, "joystick_order"),
-            'plate_detection': ('verified_text', String, self.plate_detection_listener_cb, "detected_plate_text")
+            'plate_detection': ('verified_text', String, self.plate_text_cb, "detected_plate_text")
         }
         
         for _, (topic, msg_type, callback, _) in self.ros2_subscribers.items():
@@ -148,7 +148,7 @@ class Ros2MqttClient(Node):
         }
         self.publish_message("vehicle/uptime", json.dumps(uptime_msg))
 
-    def plate_detection_listener_cb(self, msg):
+    def plate_text_cb(self, msg):
         self.publish_message(self.ros2_subscribers['plate_detection'][3], msg)
 
     def destroy_node(self):
