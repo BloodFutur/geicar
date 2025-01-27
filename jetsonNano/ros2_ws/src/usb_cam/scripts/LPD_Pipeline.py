@@ -107,7 +107,7 @@ class PlateDetection(Node):
             self.get_logger().error(f"Failed to convert image: {e}")
             return
         if not self.isbuffering: 
-            results = self.model.predict(frame)
+            results = self.model(frame,imgsz=224)
             if len(results) > 0 and len(results[0].boxes) > 0 and (box.conf[0]>0.9 for box in results[0].boxes ) and (box.cls[0]==0 for box in results[0].boxes) :
                 self.isbuffering= True
                 self.frame_count = 0 
@@ -147,7 +147,7 @@ class PlateDetection(Node):
         confidences=[] # Buffer for detected texts confidences
         
         # Step 1: Detection and extraction of the ROI
-        results = self.model(self.buffer,imgsz=200)
+        results = self.model(self.buffer,imgsz=224)
         for i,result in enumerate (results):
             if len(result) > 0 and len(result[0].boxes) > 0:
                 box = result[0].boxes[0]  # First bounding box
