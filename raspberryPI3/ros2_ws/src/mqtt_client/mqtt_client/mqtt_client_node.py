@@ -124,7 +124,7 @@ class Ros2MqttClient(Node):
 
     def plate_detection_listener_cb(self, msg):
         current_time = time.time()
-        if current_time - self.last_publish_time < 1.0 / self.max_fps:
+        if current_time - self.last_publish_time < 1.0 / self.config.max_fps:
             return  # Skip publishing if not enough time has passed
         
         self.last_publish_time = current_time
