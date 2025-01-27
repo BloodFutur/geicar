@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-#import cv2
+import cv2
 import numpy as np
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import Image, NavSatFix
+from sensor_msgs.msg import Image, NavSatFix,CompressedImage
 from std_msgs.msg import String
 from cv_bridge import CvBridge
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
@@ -71,9 +71,14 @@ class PlateDetection(Node):
             10
         )
         # Publishers
-        self.pub_text = self.create_publisher(String, '/verified_text', 10) 
+        self.pub_text = self.create_publisher(String, '/verified_text', 10)
+        self.pub_compressed = self.create_publisher(
+            CompressedImage,
+            '/plate_detection/compressed',
+            10
+        ) 
         self.timer = self.create_timer(15.0, self.force_process_images)
-
+        
     #Timeout check     
     def force_process_images(self):
         if len(self.buffer) > 0:
@@ -95,6 +100,9 @@ class PlateDetection(Node):
         try:
         # Convert ROS image message to OpenCV image
             frame = self.bridge.imgmsg_to_cv2(image_msg, desired_encoding='bgr8')
+            #Convert frame to compressed img for the website
+            img_msg_compressed = self.bridge.cv2_to_compressed_imgmsg(frame, dst_format='jpg')
+            self.pub_compressed.publish(img_msg_compressed)
         except Exception as e:
             self.get_logger().error(f"Failed to convert image: {e}")
             return
