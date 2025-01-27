@@ -75,6 +75,8 @@ class Ros2MqttClient(Node):
     def __init__(self, config: Optional[MqttConfig] = None):
         super().__init__('ros2_mqtt_client')
         self.config = config or MqttConfig()
+        self.subscribers = []
+
         self.setup_mqtt_client()
         self.setup_ros2_subscribers()
         self.last_publish_time = 0
@@ -96,16 +98,16 @@ class Ros2MqttClient(Node):
         
     def setup_ros2_subscribers(self) -> None:
         self.ros2_subscribers = {
-            'gps_vehicle': ('gps/fix_adjusted', NavSatFix, self.gps_listener_callback, "gps"),
-            'plate_img': ('plate_detection/compressed', CompressedImage, self.plate_detection_listener_cb, "plate_detection"),
-            'system_check_report': ('system_check', SystemCheck, self.system_check_listener_cb, "system_check"),
-            'general_data': ('general_data', GeneralData, self.general_data_listener_cb, "general_data"),
-            'mode': ('joystick_order', JoystickOrder, self.joystick_order_listener_cb, "joystick_order"),
-            'plate_detection': ('verified_text', String, self.plate_text_cb, "detected_plate_text")
+            'gps_vehicle': ('/gps/fix_adjusted', NavSatFix, self.gps_listener_callback, "gps"),
+            'plate_img': ('/plate_detection/compressed', CompressedImage, self.plate_detection_listener_cb, "plate_detection"),
+            'system_check_report': ('/system_check', SystemCheck, self.system_check_listener_cb, "system_check"),
+            'general_data': ('/general_data', GeneralData, self.general_data_listener_cb, "general_data"),
+            'mode': ('/joystick_order', JoystickOrder, self.joystick_order_listener_cb, "joystick_order"),
+            'plate_detection': ('/verified_text', String, self.plate_text_cb, "detected_plate_text")
         }
         
         for _, (topic, msg_type, callback, _) in self.ros2_subscribers.items():
-            self.create_subscription(msg_type, topic, callback, 10)
+            self.subscribers.append(self.create_subscription(msg_type, topic, callback, 10))
             
     def publish_message(self, topic: str, message: Any, retain: bool = True) -> None:
         try:
@@ -117,7 +119,7 @@ class Ros2MqttClient(Node):
          
     def gps_listener_callback(self, msg):
         # Use ros2_subscribers to publish in mqtt_topic
-        mqtt_topic = self.ros2_subscribers['gps'][3]
+        mqtt_topic = self.ros2_subscribers['gps_vehicle'][3]
         self.publish_message(mqtt_topic, msg)
 
     def plate_detection_listener_cb(self, msg):
