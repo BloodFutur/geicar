@@ -144,7 +144,7 @@ private:
         else {omega = this->angular_speed;}
         
         double steering_angle = 50.0;
-        if (abs(v) > 0.0001) {
+        if (abs(v) > 0.0001 && abs(omega) > 0.05) {
             steering_angle = std::atan(WHEEL_BASE * omega / v) / ANGLE_MAX;
             steering_angle = steering_angle*50 + 50;
         }
