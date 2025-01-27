@@ -39,7 +39,7 @@ class PlateDetection(Node):
 
         # Initilize local variables
         self.buffer = []
-        self.max_buffer_size = 5
+        self.max_buffer_size = 3
         self.isbuffering=False
         self.frame_skip = 3  # Sample every 5th frame
         self.frame_count = 0
@@ -66,7 +66,7 @@ class PlateDetection(Node):
         # Subscription to gps topic
         self.sub2 = self.create_subscription(
             NavSatFix,
-            '/gps/fix',  # Topic of the gps  
+            '/gps/fix_adjusted',  # Topic of the gps  
             self.gps_callback,
             10
         )
@@ -99,8 +99,8 @@ class PlateDetection(Node):
             self.get_logger().error(f"Failed to convert image: {e}")
             return
         if not self.isbuffering: 
-            results = self.model(frame)
-            if len(results) > 0 and len(results[0].boxes) > 0 and (box.conf[0]>0.9 for box in results[0].boxes ):
+            results = self.model.predict(frame)
+            if len(results) > 0 and len(results[0].boxes) > 0 and (box.conf[0]>0.9 for box in results[0].boxes ) and (box.cls[0]==0 for box in results[0].boxes) :
                 self.isbuffering= True
                 self.frame_count = 0 
                 self.get_logger().info(f"License plate detected started buffering.")
