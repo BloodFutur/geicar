@@ -168,6 +168,8 @@ class PlateDetection(Node):
                         extracted_text += ocr_result[0][1]  
                         confidence.append(ocr_result[0][2])
                 self.get_logger().info(f"Extracted Text: {extracted_text}")
+                if extracted_text=="":
+                    return
             else:
                 self.get_logger().info("No license plate detected.")
                 extracted_text="0000000"
