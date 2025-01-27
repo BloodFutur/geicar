@@ -150,7 +150,7 @@ class PlateDetection(Node):
         confidences=[] # Buffer for detected texts confidences
         
         # Step 1: Detection and extraction of the ROI
-        results = self.model(self.buffer,imgsz=224)
+        results = self.model(self.buffer,imgsz=288)
         for i,result in enumerate (results):
             if len(result) > 0 and len(result[0].boxes) > 0:
                 box = result[0].boxes[0]  # First bounding box
@@ -179,8 +179,7 @@ class PlateDetection(Node):
                         extracted_text += ocr_result[0][1]  
                         confidence.append(ocr_result[0][2])
                 self.get_logger().info(f"Extracted Text: {extracted_text}")
-                if extracted_text=="" and i>1:
-                    return
+
             else:
                 self.get_logger().info("No license plate detected.")
                 extracted_text="0000000"
