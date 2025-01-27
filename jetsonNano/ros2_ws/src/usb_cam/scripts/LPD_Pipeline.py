@@ -160,16 +160,23 @@ class PlateDetection(Node):
                 image=self.buffer[i]
                 cropped_plate = image[y1:y2, x1:x2]
                 self.get_logger().info(f"License plate detected and cropped.")
-        
+                
 
                 # Step 2: Tilt correction
                 LP_BB = [[x1, y1], [x2, y1], [x2, y2], [x1, y2]]
                 rotator = Rotator(LP_BB, cropped_plate)
                 rotated_plate = rotator.rotate_image()
                 self.get_logger().info("Tilt corrected")
+                
+                # Resize the images for better segmentation
+                target_width = 500  # Width for resizing the cropped plate
+                target_height = int((y2 - y1) * (target_width / (x2 - x1)))  # Maintain aspect ratio
+                resized_plate = cv2.resize(rotated_plate, (target_width, target_height), interpolation=cv2.INTER_CUBIC)
+                self.get_logger().info(f"Resized license plate to {resized_plate.shape[1]}x{resized_plate.shape[0]}.")
+                
                 # Step 3: Character segmentation
                 segmentor = CharacterSegmentation()
-                char_list = segmentor.segment_characters(rotated_plate)
+                char_list = segmentor.segment_characters(resized_plate)
                 self.get_logger().info("Segmentation done")
                 # Step 4: Text Recognition
                 extracted_text = ""
