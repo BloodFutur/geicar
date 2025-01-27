@@ -100,9 +100,12 @@ class PlateDetection(Node):
         try:
         # Convert ROS image message to OpenCV image
             frame = self.bridge.imgmsg_to_cv2(image_msg, desired_encoding='bgr8')
+            self.get_logger().info("Image converted to cv2 format")
             #Convert frame to compressed img for the website
             img_msg_compressed = self.bridge.cv2_to_compressed_imgmsg(frame, dst_format='jpg')
+            self.get_logger().info("Image converted to compressed format")
             self.pub_compressed.publish(img_msg_compressed)
+            self.get_logger().info("compressed image published")
         except Exception as e:
             self.get_logger().error(f"Failed to convert image: {e}")
             return
