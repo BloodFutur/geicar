@@ -95,9 +95,9 @@ def generate_launch_description():
         package='pure_pursuit_planner',
         executable='pure_pursuit_planner',
         output="screen",
-        arguments=[
-                '--ros-args', '--log-level', 'debug'
-        ]
+        # arguments=[
+        #         '--ros-args', '--log-level', 'debug'
+        # ]
     )   
     
     mqtt_client_node = Node(
