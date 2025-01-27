@@ -150,7 +150,7 @@ class PlateDetection(Node):
         confidences=[] # Buffer for detected texts confidences
         
         # Step 1: Detection and extraction of the ROI
-        results = self.model(self.buffer,imgsz=448)
+        results = self.model(self.buffer,imgsz=480)
         for i,result in enumerate (results):
             if len(result) > 0 and len(result[0].boxes) > 0:
                 box = result[0].boxes[0]  # First bounding box
@@ -169,14 +169,14 @@ class PlateDetection(Node):
                 self.get_logger().info("Tilt corrected")
                 
                 # Resize the images for better segmentation
-                target_width = 500  # Width for resizing the cropped plate
-                target_height = int((y2 - y1) * (target_width / (x2 - x1)))  # Maintain aspect ratio
-                resized_plate = cv2.resize(rotated_plate, (target_width, target_height), interpolation=cv2.INTER_CUBIC)
-                self.get_logger().info(f"Resized license plate to {resized_plate.shape[1]}x{resized_plate.shape[0]}.")
+                #target_width = 500  # Width for resizing the cropped plate
+                #target_height = int((y2 - y1) * (target_width / (x2 - x1)))  # Maintain aspect ratio
+                #resized_plate = cv2.resize(rotated_plate, (target_width, target_height), interpolation=cv2.INTER_CUBIC)
+                #self.get_logger().info(f"Resized license plate to {resized_plate.shape[1]}x{resized_plate.shape[0]}.")
                 
                 # Step 3: Character segmentation
                 segmentor = CharacterSegmentation()
-                char_list = segmentor.segment_characters(resized_plate)
+                char_list = segmentor.segment_characters(rotated_plate)
                 self.get_logger().info("Segmentation done")
                 # Step 4: Text Recognition
                 extracted_text = ""
