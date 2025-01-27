@@ -199,7 +199,7 @@ void PurePursuitNode::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr
 
 void PurePursuitNode::autonomous_mode_callback(const std_msgs::msg::Bool::SharedPtr msg) {
     autonomous_mode = msg->data;
-    RCLCPP_INFO(this->get_logger(), "Autonomous mode: %s", autonomous_mode ? "true" : "false");
+    // RCLCPP_INFO(this->get_logger(), "Autonomous mode: %s", autonomous_mode ? "true" : "false");
 }
 
 void PurePursuitNode::path_callback(const nav_msgs::msg::Path::SharedPtr msg) {
