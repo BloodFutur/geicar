@@ -139,7 +139,7 @@ class PlateDetection(Node):
         confidences=[] # Buffer for detected texts confidences
         
         # Step 1: Detection and extraction of the ROI
-        results = self.model(self.buffer)
+        results = self.model(self.buffer,imgsz=200)
         for i,result in enumerate (results):
             if len(result) > 0 and len(result[0].boxes) > 0:
                 box = result[0].boxes[0]  # First bounding box
