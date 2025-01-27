@@ -306,12 +306,8 @@ void PurePursuitNode::sync_gps_with_cmd_vel() {
     double gps_time = gps_row[0];
     double cmd_time = std::stod(cmd_row[0]);
 
-     // Comparer les timestamps avec une tolérance
-    double tolerance = 0.1; // 100 ms
-    if (std::abs(gps_time - cmd_time) <= tolerance) {
-        // Publier les données GPS
+    if (gps_time < cmd_time) {
         sensor_msgs::msg::NavSatFix gps_msg;
-
         try {
             gps_msg.latitude = gps_row[1]; // Assurez-vous des indices ici (latitude)
             gps_msg.longitude = gps_row[2]; // Longitude
@@ -322,18 +318,8 @@ void PurePursuitNode::sync_gps_with_cmd_vel() {
             RCLCPP_ERROR(this->get_logger(), "Error parsing GPS row %d: %s", gps_index_, e.what());
             return;
         }
-
         gps_fix_pub->publish(gps_msg);
-
-        // Avancer les index pour éviter les doublons
         gps_index_++;
-        current_index_++;
-    } else if (gps_time < cmd_time) {
-        // Avancer uniquement l'index GPS si le temps GPS est en retard
-        gps_index_++;
-    } else {
-        // Avancer uniquement l'index des commandes si le temps GPS est en avance
-        current_index_++;
     }
 }
 
