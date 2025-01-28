@@ -112,7 +112,7 @@ class Ros2MqttClient(Node):
     def publish_message(self, topic: str, message: Any, retain: bool = True) -> None:
         try:
             json_msg = MessageHandler.to_dict(message)
-            self.mqtt_client.publish(topic, json.dumps(json_msg), retain=retain)
+            self.mqtt_client.publish(topic, json.dumps(json_msg), retain=False)
             self.get_logger().debug(f"Published message to {topic}")
         except Exception as e:
             self.get_logger().error(f"Error publishing message to {topic}: {e}")
