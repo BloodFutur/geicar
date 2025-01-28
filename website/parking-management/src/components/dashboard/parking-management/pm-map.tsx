@@ -30,6 +30,10 @@ interface ParkingPolygon {
     poly: L.Polygon;
 }
 
+interface DetectionComputed {
+    data: string;
+}
+
 function ParkingManagementMap() {
     const { status, payload, mqttSub } = useMqtt();
 
@@ -46,7 +50,7 @@ function ParkingManagementMap() {
     const [pathSegments, setPathSegments] = useState<any[]>([]);
     const addedParkingSpaces = new Set();
 
-    const [detection, setDetection] = useState<Detection | null>(null);
+    const [detection, setDetection] = useState<DetectionComputed | null>(null);
 
     const colors = {
         5: 'green',  // RTK Float
@@ -100,6 +104,7 @@ function ParkingManagementMap() {
         }).addTo(map);
 
         return () => {
+            console.log('Removing map');
             map.remove();
         };
     }, []);
@@ -108,7 +113,7 @@ function ParkingManagementMap() {
         if (payload != null && payload.topic == gpsTopicName) {
             try {
                 // Parse the NavSatFix message
-                //console.log(payload.message);
+                // console.log(payload.message);
                 const navSatFix = JSON.parse(payload.message.toString());
                 handleGPSMessage(navSatFix)
             } catch (error) {
@@ -118,19 +123,29 @@ function ParkingManagementMap() {
         if (payload?.topic == plateDetectionTopicName) {
             try {
                 // There are double quotes and backslashes in the message, so we need to parse it twice
-                const message = JSON.parse(payload.message);
+                const message: Detection = JSON.parse(payload.message);
 
-                const [plateField, latField, longField, confField] = message.data.split(',').map(String);
+                console.log('Plate detection before', payload.message);
+
+                let msg_data = message['data'];
+                console.log('Plate detection message inside try:', payload.message);
+
+                const [plateField, latField, longField, confField] = msg_data.split(',').map(String);
                 const plate = plateField.split(':')[1];
                 const lat = latField.split(':')[1];
                 const long = longField.split(':')[1];
                 const conf = confField.split(':')[1];
-                setDetection({plate, latitude: parseFloat(lat), longitude: parseFloat(long), confidence: parseFloat(conf)});
+                console.log('Plate detection message inside try 2:', payload.message);
+
+                let current_detection = {plate, latitude: parseFloat(lat), longitude: parseFloat(long), confidence: parseFloat(conf)};
+
+                setDetection(current_detection);
                 
-                console.log('Detection:', detection);
+
+                console.log('Detection:', current_detection);
 
                 // Search for the closest parking space
-                if (detection) {
+                if (current_detection) {
                     const closestParking = parkingSpacesAdjusted.reduce((acc, parking) => {
                         const distance = Math.sqrt(Math.pow(parking.lat - detection.latitude, 2) + Math.pow(parking.lon - detection.longitude, 2));
                         return distance < acc[1] ? [parking, distance] : acc;
@@ -164,6 +179,7 @@ function ParkingManagementMap() {
 
         // Add to map
         if (mapRef.current) {
+            console.log('Adding GPS message to map:', message);
             L.circle([message.latitude, message.longitude], {
                 color: "blue",
                 fillColor: "#30f",

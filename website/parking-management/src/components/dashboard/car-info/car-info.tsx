@@ -253,7 +253,7 @@ export function CarInfo(): React.JSX.Element {
                 </Grid>
                 <Grid lg={3} sm={6} xs={12}>
                     <Battery sx={{ height: '100%' }} value={batteryLevel} />
-                </Grid>d
+                </Grid>
                 <Grid lg={3} sm={6} xs={12}>
                     <RunningTime sx={{ height: '100%' }} value={runningTime} />
                 </Grid>
