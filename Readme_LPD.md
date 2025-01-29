@@ -37,7 +37,13 @@ pip install opencv-python numpy easyocr ultralytics cv_bridge rclpy sensor_msgs 
 ### Running the Node
 To launch the License Plate Detection Pipeline, run:
 ```sh
-ros2 run your_package_name LPD_Pipeline.py
+ros2 run usb_cam LPD_Pipeline.py
+
+```
+To launch the application (caméra+LPD_pipeline):
+```sh
+ros2 launch geicar_start_jetson geicar.jetson.launch.py
+
 ```
 
 ### Topics
