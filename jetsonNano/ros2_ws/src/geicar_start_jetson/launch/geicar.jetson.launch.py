@@ -46,10 +46,52 @@ def generate_launch_description():
         emulate_tty=True
     )
 
+    # Buffering  node
+    BufferingNode= Node(
+        package='usb_cam',  # name of the package where you can find the .py script of the buffering
+        executable='buffer_node.py',  # Name of the Python file
+        name='BufferingNode',  # Name of the ROS node
+        output='screen',
+        parameters=[{
+            'camera_topic': '/image_raw',  # If needed you can change the name of the camera topic 
+        }],
+        emulate_tty=True
+    )
+    # LPD Pipeline Node
+    LPDPipelineNode= Node(
+        package='usb_cam',  # name of the package where you can find the .py script of the buffering
+        executable='LPD_Pipeline.py',  # Name of the Python file
+        name='LPDPipelineNode',  # Name of the ROS node
+        output='screen',
+        emulate_tty=True
+    )
+    # Verification Node
+    VerificationNode= Node(
+        package='usb_cam',  # name of the package where you can find the .py script of the buffering
+        executable='verification_node.py',  # Name of the Python file
+        name='VerificationNode',  # Name of the ROS node
+        output='screen',
+        parameters=[{
+            'Buffer_Extracted_text_topic': '/detected_texts',  # Buffered images topic
+        }],
+        emulate_tty=True
+    )
+    # Verification Node
+    BufferingTestNode= Node(
+        package='usb_cam',  # name of the package where you can find the .py script of the buffering
+        executable='testing_buffer.py',  # Name of the Python file
+        name='TestingBufferNode',  # Name of the ROS node
+        emulate_tty=True
+    )
+
 
     ld.add_action(lidar_node)
     ld.add_action(camera_node)
     ld.add_action(system_check_ack_node)
-    ld.add_action(plate_detection_node)
+    #ld.add_action(plate_detection_node)
+    #ld.add_action(BufferingTestNode)
+    #ld.add_action(BufferingNode)
+    ld.add_action(LPDPipelineNode)
+    #ld.add_action(VerificationNode)
 
     return ld
