@@ -50,7 +50,7 @@ class Rotator:
 
         # Find the index of the coordinate with the maximum y-coordinate
         for i in range(4):
-            if self.LP_BBox[i][1] > m:  # Access y-coordinate as LP_BBox[i][1]
+            if self.LP_BBox[i][1] > m:  
                 idx = i
                 m = self.LP_BBox[i][1]
 

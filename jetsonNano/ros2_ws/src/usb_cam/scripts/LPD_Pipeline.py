@@ -28,7 +28,7 @@ class PlateDetection(Node):
         self.model = YOLO("/root/geicar/PlaqueDetection/runs/detect/train7/weights/best.pt")
         # Move the model to the GPU
         #self.model.to(device)
-        self.model.eval() 
+        self.model.eval() # Evaluation mode
 
         #self.model=YOLO('/home/pi/geicar/PlaqueDetection/runs/detect/train7/weights/best.pt')
         self.get_logger().info("YOLOv8 model loaded successfully!")
@@ -39,9 +39,9 @@ class PlateDetection(Node):
 
         # Initilize local variables
         self.buffer = []
-        self.max_buffer_size = 3
-        self.isbuffering=False
-        self.frame_skip = 3  # Sample every 5th frame
+        self.max_buffer_size = 10 # max number of images in the buffer
+        self.isbuffering=False # Flag for signaling buffering
+        self.frame_skip = 3  # Sample every 3rd frame ( FPS divisor)
         self.frame_count = 0
         self.latitude = 0.0
         self.longitude = 0.0
@@ -49,7 +49,7 @@ class PlateDetection(Node):
         """
         The QoSProfile configuration defines the behavior of message delivery and storage for the topic subscription. 
         By setting the reliability to RELIABLE, it ensures that all messages are delivered to the subscriber even if the subscriber is busy.
-        This makes sure that the License Plate Detection Pipeline proccesses the buffered images in order.
+        This makes sure that the License Plate Detection Pipeline proccesses  images in order.
         """
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE, # Ensure all messages are reliably delivered to the subscriber.
@@ -71,13 +71,13 @@ class PlateDetection(Node):
             10
         )
         # Publishers
-        self.pub_text = self.create_publisher(String, '/verified_text', 10)
+        self.pub_text = self.create_publisher(String, '/verified_text', 10) # License plate detection publisher
         self.pub_compressed = self.create_publisher(
             CompressedImage,
             '/plate_detection/compressed',
             10
-        ) 
-        self.timer = self.create_timer(15.0, self.force_process_images)
+        )  # Publisher for compressed images to the website
+        self.timer = self.create_timer(15.0, self.force_process_images) # Timer to force process images every 15 seconds
         
     #Timeout check     
     def force_process_images(self):
@@ -86,6 +86,7 @@ class PlateDetection(Node):
             self.process_images()
             self.buffer = []     
             self.isbuffering=False #Reset flag
+
     def gps_callback(self, msg):
         # Extract latitude and longitude from NavSatFix message
         self.latitude = msg.latitude
@@ -104,12 +105,14 @@ class PlateDetection(Node):
             #Convert frame to compressed img for the website
             img_msg_compressed = self.bridge.cv2_to_compressed_imgmsg(frame, dst_format='jpg')
             self.get_logger().info("Image converted to compressed format")
+            # Publish to the topic
             self.pub_compressed.publish(img_msg_compressed)
             self.get_logger().info("compressed image published")
         except Exception as e:
             self.get_logger().error(f"Failed to convert image: {e}")
             return
         if not self.isbuffering: 
+            # Detection of a license plate triggers the buffering
             results = self.model(frame,imgsz=224)
             if len(results) > 0 and len(results[0].boxes) > 0 and (box.conf[0]>0.9 for box in results[0].boxes ) and (box.cls[0]==0 for box in results[0].boxes) :
                 self.isbuffering= True
@@ -204,7 +207,7 @@ class PlateDetection(Node):
             
             
     def validate_plate(self,plate):
-        # Regex for current French license plate format (AA123AA)
+        # Regex for  French license plate format (AA123AA)
         plate_format = re.compile(r"^[A-Z]{2}\d{3}[A-Z]{2}$")
         return bool(plate_format.match(plate))
     
