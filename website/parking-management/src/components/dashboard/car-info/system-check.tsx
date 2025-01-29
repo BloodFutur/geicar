@@ -53,7 +53,6 @@ export function SystemCheckTable({ checks = [], sx }: SystemCheckTableProps): Re
           </TableHead>
           <TableBody>
             {checks.map((check) => {
-
               return (
                 <TableRow hover key={check.id}>
                   <TableCell>{check.id}</TableCell>

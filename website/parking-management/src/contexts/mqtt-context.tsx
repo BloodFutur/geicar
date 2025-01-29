@@ -23,8 +23,8 @@ export function MqttProvider({ children }: MqttProviderProps): React.JSX.Element
   const mqttClientRef = React.useRef<MqttClient | null>(null);
   const [payload, setPayload] = React.useState<{ topic: string; message: string } | null>(null);
 
-  console.log('MQTT Broker URL:', process.env.NEXT_PUBLIC_MQTT_BROKER_URL);
-  console.log('MQTT Client ID:',  process.env.NEXT_PUBLIC_MQTT_CLIENT_ID);
+  // console.log('MQTT Broker URL:', process.env.NEXT_PUBLIC_MQTT_BROKER_URL);
+  // console.log('MQTT Client ID:',  process.env.NEXT_PUBLIC_MQTT_CLIENT_ID);
 
   React.useEffect(() => {
     // Set up the MQTT client connection

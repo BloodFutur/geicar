@@ -143,12 +143,19 @@ private:
                 double v = (v_left + v_right) / 2.0;
 
                 // Compute angular velocity using the steering angle
-                double omega = v * std::tan(motorsFeedbackMsg.steering_angle*ANGLE_MAX) / WHEEL_BASE;
+                double fixed_steering_angle = -motorsFeedbackMsg.steering_angle;
+                if (fixed_steering_angle > -0.1 && fixed_steering_angle < 0.1) {
+                    fixed_steering_angle = 0.0;
+                } 
+                
+                double omega = v * std::tan(fixed_steering_angle*ANGLE_MAX) / WHEEL_BASE;
 
                 // Update pose using kinematic model
                 odom_x += v * std::cos(odom_theta) * dt;
                 odom_y += v * std::sin(odom_theta) * dt;
                 odom_theta += omega * dt;
+
+
 
                 // Create the odometry message
                 auto odom_msg = nav_msgs::msg::Odometry();
@@ -395,6 +402,10 @@ private:
                 imu_raw_msg.angular_velocity.z = ang_vel_z * pow(1.7453,-5);    //Conversion to [rad/s]
 
                 imu_raw_msg.header.stamp = rclcpp::Clock().now();
+
+                imu_raw_msg.orientation_covariance={1e-3, 0, 0, 0, 1e-3, 0, 0, 0, 1e-3};
+                imu_raw_msg.linear_acceleration_covariance={1e-4, 0, 0, 0, 1e-4, 0, 0, 0, 1e-4};
+                imu_raw_msg.angular_velocity_covariance={1e-2, 0, 0, 0, 1e-2, 0, 0, 0, 1e-2};
                 
                 publisher_imu_raw_->publish(imu_raw_msg);
 
@@ -455,7 +466,7 @@ private:
     void resetOdometry(){
         odom_x = 0.0;
         odom_y = 0.0;
-        odom_theta = 0.0;
+        odom_theta = -0.491868659;
         last_time = this->now();
     }
 

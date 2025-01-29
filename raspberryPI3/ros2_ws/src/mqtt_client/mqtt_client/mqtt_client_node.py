@@ -1,18 +1,40 @@
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import NavSatFix
-from sensor_msgs.msg import CompressedImage
+from typing import Any, Dict, Optional
+from dataclasses import dataclass
 import json
-import paho.mqtt.client as mqtt
-
 import base64
+import os
 import time
+from sensor_msgs.msg import NavSatFix, CompressedImage
+from interfaces.msg import SystemCheck, GeneralData, JoystickOrder
+import paho.mqtt.client as mqtt
+from std_msgs.msg import String
 
-# MQTT Settings
-BROKER_ADDRESS = "srv665994.hstgr.cloud"
-MQTT_PORT = 443
-MQTT_USERNAME = "geicar"
-MQTT_PASSWORD = "geicar"
+@dataclass
+class MqttConfig:
+    broker_address: str = "srv665994.hstgr.cloud"
+    mqtt_port: int = 443
+    mqtt_username: str = "geicar"
+    mqtt_password: str = "geicar"
+    transport: str = "websockets"
+    max_fps: int = 20
+
+
+class MessageHandler:
+    @staticmethod
+    def to_dict(obj: Any) -> Dict:
+        if isinstance(obj, dict):
+            return dict((key.lstrip("_"), MessageHandler.to_dict(val)) for key, val in obj.items())
+        elif hasattr(obj, "_ast"):
+            return todict(obj._ast())
+        elif hasattr(obj, "__iter__") and not isinstance(obj, str):
+            return [todict(v) for v in obj]
+        elif hasattr(obj, '__dict__'):
+            return todict(vars(obj))
+        elif hasattr(obj, '__slots__'):
+            return todict(dict((name, getattr(obj, name)) for name in getattr(obj, '__slots__')))
+        return obj
 
 
 def todict(obj):        
@@ -36,7 +58,7 @@ def on_connect(client, userdata, flags, rc):
         status = {
             "status": "Connected"
         }
-        client.publish("vehicle/status", json.dumps(status))
+        client.publish("vehicle/status", json.dumps(status), retain=True)
     else:
         print("Failed to connect, return code %d\n", rc)
  
@@ -45,56 +67,91 @@ def on_disconnect(client, userdata, rc):
     status = {
         "status": "Disconnected"
     }
-    client.publish("vehicle/status", json.dumps(status))
+    print("Disconnected from MQTT Broker!")
+    client.publish("vehicle/status", json.dumps(status), retain=True)
        
     
 class Ros2MqttClient(Node):
-    def __init__(self):
+    def __init__(self, config: Optional[MqttConfig] = None):
         super().__init__('ros2_mqtt_client')
-        self.sub_gps = self.create_subscription(
-            NavSatFix,
-            '/gps/fix',
-            self.gps_listener_callback,
-            10
-        )
-        self.sub_camera = self.create_subscription(
-            CompressedImage,
-            '/plate_detection/compressed',
-            self.plate_detection_listener_cb,
-            10
-        )
-        self.mqtt_client = mqtt.Client(transport="websockets")
-        self.mqtt_client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
+        self.config = config or MqttConfig()
+        self.subscribers = []
+
+        self.setup_mqtt_client()
+        self.setup_ros2_subscribers()
+        self.last_publish_time = 0
+        self.uptime_timer_1mn = self.create_timer(60, self.uptime_timer_callback)
         
+    def setup_mqtt_client(self) -> None:
+        self.mqtt_client = mqtt.Client(transport=self.config.transport)
+        self.mqtt_client.username_pw_set(self.config.mqtt_username, self.config.mqtt_password)
         self.mqtt_client.tls_set()
         self.mqtt_client.on_connect = on_connect
         self.mqtt_client.on_disconnect = on_disconnect
         
-        self.mqtt_client.connect(BROKER_ADDRESS, MQTT_PORT)
+        # try:
+        self.mqtt_client.connect(self.config.broker_address, self.config.mqtt_port)
         self.mqtt_client.loop_start()
+        # except Exception as e:
+        #     self.get_logger().error(f"Error connecting to MQTT broker: {e}")
+        #     raise
         
-        self.last_publish_time = 0
-        self.max_fps = 20
-       
+    def setup_ros2_subscribers(self) -> None:
+        self.ros2_subscribers = {
+            'gps_vehicle': ('/gps/fix_adjusted', NavSatFix, self.gps_listener_callback, "gps"),
+            'plate_img': ('/plate_detection/compressed', CompressedImage, self.plate_detection_listener_cb, "plate_detection"),
+            'system_check_report': ('/system_check', SystemCheck, self.system_check_listener_cb, "system_check"),
+            'general_data': ('/general_data', GeneralData, self.general_data_listener_cb, "general_data"),
+            'mode': ('/joystick_order', JoystickOrder, self.joystick_order_listener_cb, "joystick_order"),
+            'plate_detection': ('/verified_text', String, self.plate_text_cb, "detected_plate_text")
+        }
+        
+        for _, (topic, msg_type, callback, _) in self.ros2_subscribers.items():
+            self.subscribers.append(self.create_subscription(msg_type, topic, callback, 10))
+            
+    def publish_message(self, topic: str, message: Any, retain: bool = True) -> None:
+        try:
+            json_msg = MessageHandler.to_dict(message)
+            self.mqtt_client.publish(topic, json.dumps(json_msg), retain=False)
+            self.get_logger().debug(f"Published message to {topic}")
+        except Exception as e:
+            self.get_logger().error(f"Error publishing message to {topic}: {e}")
+         
     def gps_listener_callback(self, msg):
-        self.get_logger().info("Publishing gps")
-        json_message = todict(msg)
-        self.mqtt_client.publish("gps", json.dumps(json_message))
+        # Use ros2_subscribers to publish in mqtt_topic
+        mqtt_topic = self.ros2_subscribers['gps_vehicle'][3]
+        self.publish_message(mqtt_topic, msg)
 
     def plate_detection_listener_cb(self, msg):
         current_time = time.time()
-        if current_time - self.last_publish_time < 1.0 / self.max_fps:
+        if current_time - self.last_publish_time < 1.0 / self.config.max_fps:
             return  # Skip publishing if not enough time has passed
         
         self.last_publish_time = current_time
-        
-        self.get_logger().info("Publishing image")
-        json_message = todict(msg)
-        transformed_json = json_message.copy()
-        
+        transformed_json = MessageHandler.to_dict(msg)
         # Convert to base64 so that the web browser knows how to use this data
         transformed_json["data"] = base64.b64encode(msg.data).decode('utf-8')
-        self.mqtt_client.publish("plate_detection", json.dumps(transformed_json))
+        self.publish_message(self.ros2_subscribers['plate_img'][3], transformed_json)
+
+    def system_check_listener_cb(self, msg):
+        if msg.report:
+            self.publish_message(self.ros2_subscribers['system_check_report'][3], msg)
+    
+    def general_data_listener_cb(self, msg):
+        self.publish_message(self.ros2_subscribers['general_data'][3], msg)
+        
+    def joystick_order_listener_cb(self, msg):
+        self.publish_message(self.ros2_subscribers['mode'][3], msg)
+    
+    def uptime_timer_callback(self):
+        uptime = get_uptime()
+        uptime_msg = {
+            'uptime': uptime
+        }
+        self.publish_message("vehicle/uptime", json.dumps(uptime_msg))
+
+    def plate_text_cb(self, msg):
+        self.publish_message(self.ros2_subscribers['plate_detection'][3], msg)
 
     def destroy_node(self):
         # Stop MQTT loop before destroying the node
@@ -102,13 +159,24 @@ class Ros2MqttClient(Node):
         super().destroy_node()
 
 
+def get_uptime():
+    with open('/proc/uptime', 'r') as f:
+        uptime_seconds = float(f.readline().split()[0])
+    uptime_string = time.strftime('%H:%M:%S', time.gmtime(uptime_seconds))
+    return uptime_string
+    
+
 def main(args=None):
     rclpy.init(args=args)
-    client = Ros2MqttClient()
+    config = MqttConfig()
+    client = Ros2MqttClient(config)
+    
     try:
         rclpy.spin(client)
     except KeyboardInterrupt:
         client.get_logger().info('Shutting down mqtt client...')
+    except Exception as e:
+        client.get_logger().error(f'Error: {e}')
     finally:
         client.destroy_node()
         rclpy.shutdown()

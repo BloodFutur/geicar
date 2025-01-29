@@ -40,13 +40,17 @@ public:
         currentLeftSpeed = 0.0;
         currentRightSpeed = 0.0;
         
-        obstacle_detected = false ;
-        
+        obstacle_detected = false ;  
+
+        pwm_cmd_pure_pursuit = 0;
+        steering_angle_pwm_pure_pursuit = 0;
+        angular_speed = 0;      
 
         publisher_can_= this->create_publisher<interfaces::msg::MotorsOrder>("motors_order", 10);
 
         publisher_steeringCalibration_ = this->create_publisher<interfaces::msg::SteeringCalibration>("steering_calibration", 10);
 
+        publisher_autonomous_mode_ = this->create_publisher<std_msgs::msg::Bool>("autonomous_mode", 10);
         
 
         subscription_joystick_order_ = this->create_subscription<interfaces::msg::JoystickOrder>(
@@ -62,7 +66,10 @@ public:
         "obstacles_detection", 10, std::bind(&car_control::obstaclesDetectionCallback, this, _1));
         
         server_calibration_ = this->create_service<std_srvs::srv::Empty>(
-                            "steering_calibration", std::bind(&car_control::steeringCalibration, this, std::placeholders::_1, std::placeholders::_2));
+        "steering_calibration", std::bind(&car_control::steeringCalibration, this, std::placeholders::_1, std::placeholders::_2));
+
+        subscription_output_pure_pursuit_ = this->create_subscription<geometry_msgs::msg::Twist>(
+        "cmd_vel", 10, std::bind(&car_control::outputPurePursuitCallback, this, _1));
 
         timer_ = this->create_wall_timer(PERIOD_UPDATE_CMD, std::bind(&car_control::updateCmd, this));
 
@@ -127,6 +134,25 @@ private:
         this->obstacle_detected = detection.data ;
     }
 
+
+    //Callback function for the pure pursuit output
+    void outputPurePursuitCallback(const geometry_msgs::msg::Twist & cmd_vel){
+        double v = cmd_vel.linear.x;   
+        double omega = -cmd_vel.angular.z;
+
+        if (abs(omega) <= 0.25) {this->angular_speed = omega;}
+        else {omega = this->angular_speed;}
+        
+        double steering_angle = 50.0;
+        if (abs(v) > 0.0001 && abs(omega) > 0.05) {
+            steering_angle = std::atan(WHEEL_BASE * omega / v) / ANGLE_MAX;
+            steering_angle = steering_angle*50 + 50;
+        }
+        steering_angle = std::clamp(steering_angle, 0.0, 100.0);
+        this->steering_angle_pwm_pure_pursuit = static_cast<int>(steering_angle); 
+        this->pwm_cmd_pure_pursuit = velocity_to_pwm(v);
+    } 
+
     /* Update PWM commands : leftRearPwmCmd, rightRearPwmCmd, steeringPwmCmd
     *
     * This function is called periodically by the timer [see PERIOD_UPDATE_CMD in "car_control_node.h"]
@@ -136,7 +162,7 @@ private:
     * - currentAngle [from motors feedback]
     */
     void updateCmd(){
-
+        auto msg = std_msgs::msg::Bool();
         auto motorsOrder = interfaces::msg::MotorsOrder();
 
         if (!start){    //Car stopped
@@ -146,9 +172,9 @@ private:
 
 
         }else{ //Car started
-
             //Manual Mode
             if (mode==0){
+                msg.data = false;
                 
                 manualPropulsionCmd(requestedThrottle, reverse, leftRearPwmCmd,rightRearPwmCmd);
 
@@ -158,26 +184,34 @@ private:
             //Autonomous Mode
             } else if (mode==1){
                 if (!this->obstacle_detected){
-                    updateSpeedCmd();
-                    
-                    RCLCPP_DEBUG(this->get_logger(), "leftSpeedCmd : %f", leftSpeedCmd);
-                    RCLCPP_DEBUG(this->get_logger(), "rightSpeedCmd : %f", rightSpeedCmd);
+                    msg.data = true;
 
-                    autonomousPropulsionCmd(rightSpeedCmd, rightRearPwmCmd);
-                    autonomousPropulsionCmd(leftSpeedCmd, leftRearPwmCmd);
+                    // updateSpeedCmd();
+                    
+                    // RCLCPP_DEBUG(this->get_logger(), "leftSpeedCmd : %f", leftSpeedCmd);
+                    // RCLCPP_DEBUG(this->get_logger(), "rightSpeedCmd : %f", rightSpeedCmd);
+
+                    // autonomousPropulsionCmd(rightSpeedCmd, rightRearPwmCmd);
+                    // autonomousPropulsionCmd(leftSpeedCmd, leftRearPwmCmd);
+                    leftRearPwmCmd = this->pwm_cmd_pure_pursuit;
+                    rightRearPwmCmd = this->pwm_cmd_pure_pursuit;
+                    steeringPwmCmd = this->steering_angle_pwm_pure_pursuit;
+
                 }
                 else{
                     leftRearPwmCmd = STOP;
                     rightRearPwmCmd = STOP;
                     steeringPwmCmd = STOP;
-                } 
+                }
             }
+
         }
 
         //Send order to motors
         motorsOrder.left_rear_pwm = leftRearPwmCmd;
         motorsOrder.right_rear_pwm = rightRearPwmCmd; 
         motorsOrder.steering_pwm = steeringPwmCmd;
+        publisher_autonomous_mode_->publish(msg);
         publisher_can_->publish(motorsOrder);
     }
 
@@ -293,6 +327,16 @@ private:
         RCLCPP_DEBUG(this->get_logger(), "errorLeftSpeed : %f", errorLeftSpeed);
         RCLCPP_DEBUG(this->get_logger(), "errorRightSpeed : %f", errorRightSpeed);
    }
+
+
+    // Function to convert velocity (m/s) to PWM value
+    int velocity_to_pwm(double velocity) {
+        // Convert velocity (m/s) to PWM
+        int pwm = 50 + static_cast<int>(velocity * 60.0 / (2 * M_PI * WHEEL_RADIUS));
+        pwm = std::clamp(pwm, MIN_PWM_MOTOR, MAX_PWM_MOTOR);
+        return pwm;
+    }
+
     
     // ---- Private variables ----
 
@@ -332,18 +376,25 @@ private:
     //Publishers
     rclcpp::Publisher<interfaces::msg::MotorsOrder>::SharedPtr publisher_can_;
     rclcpp::Publisher<interfaces::msg::SteeringCalibration>::SharedPtr publisher_steeringCalibration_;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_autonomous_mode_;
 
     //Subscribers
     rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscription_joystick_order_;
     rclcpp::Subscription<interfaces::msg::MotorsFeedback>::SharedPtr subscription_motors_feedback_;
     rclcpp::Subscription<interfaces::msg::SteeringCalibration>::SharedPtr subscription_steering_calibration_;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscription_obstacles_detection_ ;
+    rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr subscription_output_pure_pursuit_;
 
     //Timer
     rclcpp::TimerBase::SharedPtr timer_;
 
     //Steering calibration Service
     rclcpp::Service<std_srvs::srv::Empty>::SharedPtr server_calibration_;
+
+    //Pure pursuit command output
+    int pwm_cmd_pure_pursuit;
+    int steering_angle_pwm_pure_pursuit;
+    float angular_speed;
 };
 
 

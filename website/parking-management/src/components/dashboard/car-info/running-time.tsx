@@ -21,7 +21,7 @@ export function RunningTime({ value, sx }: RunningTimeProps): React.JSX.Element 
             <Typography color="text.secondary" variant="overline">
               Running Time
             </Typography>
-            <Typography variant="h4">{value} mn</Typography>
+            <Typography variant="h4">{value.toFixed(0)} mn</Typography>
           </Stack>
           <Avatar sx={{ backgroundColor: 'var(--mui-palette-secondary-main)', height: '56px', width: '56px' }}>
             <ClockClockwiseIcon fontSize="var(--icon-fontSize-lg)" />
