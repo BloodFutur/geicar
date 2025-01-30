@@ -193,9 +193,9 @@ private:
 
                     // autonomousPropulsionCmd(rightSpeedCmd, rightRearPwmCmd);
                     // autonomousPropulsionCmd(leftSpeedCmd, leftRearPwmCmd);
-                    leftRearPwmCmd = this->pwm_cmd_pure_pursuit;
-                    rightRearPwmCmd = this->pwm_cmd_pure_pursuit;
-                    steeringPwmCmd = this->steering_angle_pwm_pure_pursuit;
+                    // leftRearPwmCmd = this->pwm_cmd_pure_pursuit;
+                    // rightRearPwmCmd = this->pwm_cmd_pure_pursuit;
+                    // steeringPwmCmd = this->steering_angle_pwm_pure_pursuit;
 
                 }
                 else{
